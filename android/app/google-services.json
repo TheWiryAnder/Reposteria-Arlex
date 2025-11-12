@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "350914998039",
+    "project_id": "reposteria-arlex",
+    "storage_bucket": "reposteria-arlex.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:350914998039:android:5128d5c968564e8f4b9152",
+        "android_client_info": {
+          "package_name": "com.example.reposteria_arlex"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAeGrtU_28LRLUKYeYVQbTewWOnbI2mXNs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

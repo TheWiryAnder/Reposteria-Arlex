@@ -1,0 +1,119 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Función helper para verificar si el usuario está autenticado
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Función helper para verificar si es el dueño del documento
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Función helper para verificar si es admin
+    function isAdmin() {
+      return isSignedIn() &&
+             exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin';
+    }
+
+    // Colección de usuarios
+    match /usuarios/{userId} {
+      allow read: if true; // Permitir lectura para recuperación de contraseña
+      allow create: if true; // Permitir creación para registro
+
+      // Permitir actualización si:
+      // 1. Usuario autenticado es dueño o admin, O
+      // 2. Es actualización de campos de recuperación de contraseña (sin autenticación)
+      allow update: if isSignedIn() && (isOwner(userId) || isAdmin()) ||
+                       (!isSignedIn() &&
+                        // Verificar que solo se modifican campos permitidos para recuperación
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['codigoValidacion', 'nuevaPasswordTemporal', 'updatedAt']) &&
+                        // No se puede cambiar el email
+                        request.resource.data.email == resource.data.email);
+
+      allow delete: if isAdmin();
+    }
+
+    // Colección de productos
+    match /productos/{productId} {
+      allow read: if true; // Todos pueden leer productos
+      allow create, delete: if isAdmin(); // Solo admin puede crear/eliminar productos
+      allow update: if isSignedIn(); // Usuarios autenticados pueden actualizar (para stock)
+    }
+
+    // Colección de pedidos
+    match /pedidos/{pedidoId} {
+      // Permitir todas las operaciones si está autenticado
+      allow read, write: if isSignedIn();
+
+      // Subcolección de historial - permitir todo si está autenticado
+      match /historial/{historialId} {
+        allow read, write: if isSignedIn();
+      }
+    }
+
+    // Colección de carritos
+    match /carritos/{carritoId} {
+      allow read: if isSignedIn() &&
+                     (resource.data.usuarioId == request.auth.uid || isAdmin());
+      allow write: if isSignedIn() &&
+                      request.resource.data.usuarioId == request.auth.uid;
+    }
+
+    // Colección de información del negocio
+    match /informacion_negocio/{docId} {
+      allow read: if true; // Todos pueden leer
+      allow write: if isAdmin();
+    }
+
+    // Colección de configuración del sistema
+    match /configuracion_sistema/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Colección de configuración (métodos de pago, etc.)
+    match /configuracion/{docId} {
+      allow read: if true; // Todos pueden leer
+      allow write: if isAdmin(); // Solo admin puede escribir
+    }
+
+    // Colección de notificaciones
+    match /notificaciones/{notifId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() || isAdmin();
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Colección de categorías
+    match /categorias/{categoriaId} {
+      allow read: if true; // Todos pueden leer categorías
+      allow write: if isAdmin(); // Solo admin puede crear/modificar/eliminar
+    }
+
+    // Colección de promociones
+    match /promociones/{promocionId} {
+      allow read: if true; // Todos pueden leer promociones
+      allow write: if isAdmin(); // Solo admin puede crear/modificar/eliminar
+    }
+
+    // Colección de reportes
+    match /reportes/{reporteId} {
+      allow read: if isAdmin(); // Solo admin puede leer reportes
+      allow create: if isAdmin(); // Solo admin puede crear reportes
+      allow update, delete: if false; // No permitir modificar o eliminar
+    }
+
+    // Colección de reseñas
+    match /resenas/{resenaId} {
+      allow read: if true; // Todos pueden leer reseñas
+      allow create: if isSignedIn(); // Solo usuarios autenticados pueden crear reseñas
+      allow update: if isSignedIn() && (resource.data.usuarioId == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && (resource.data.usuarioId == request.auth.uid || isAdmin());
+    }
+  }
+}

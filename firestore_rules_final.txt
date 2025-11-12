@@ -1,0 +1,105 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin';
+    }
+
+    function isEmpleado() {
+      return isAuthenticated() && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'empleado';
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Usuarios
+    match /usuarios/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Información del negocio
+    match /informacion_negocio/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Categorías
+    match /categorias/{categoriaId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Productos
+    match /productos/{productoId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Pedidos
+    match /pedidos/{pedidoId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAdmin() || isEmpleado();
+      allow delete: if isAdmin();
+
+      match /historial/{historialId} {
+        allow read: if isAuthenticated();
+        allow write: if isAdmin() || isEmpleado();
+      }
+    }
+
+    // Carritos
+    match /carritos/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
+    }
+
+    // Notificaciones
+    match /notificaciones/{notificacionId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Promociones
+    match /promociones/{promocionId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Reseñas
+    match /reseñas/{reseñaId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    // Inventario
+    match /inventario_movimientos/{movimientoId} {
+      allow read: if isAdmin() || isEmpleado();
+      allow write: if isAdmin();
+    }
+
+    // Configuración
+    match /configuracion_sistema/{document=**} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Estadísticas
+    match /estadisticas/{periodo} {
+      allow read: if isAdmin() || isEmpleado();
+      allow write: if isAdmin();
+    }
+  }
+}

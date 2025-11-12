@@ -1,0 +1,424 @@
+/// EJEMPLO DE USO DEL SISTEMA DE INFORMACIÓN DEL NEGOCIO
+/// Este archivo muestra cómo usar el nuevo sistema de gestión de información
+
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:reposteria_arlex/features/informacion_negocio/controladores/informacion_controlador.dart';
+import 'package:reposteria_arlex/features/informacion_negocio/vistas/editar_informacion_vista.dart';
+import 'package:reposteria_arlex/modelos/informacion_negocio_modelo.dart';
+
+/// 1. CONFIGURAR EL PROVIDER EN MAIN.DART
+///
+/// En tu main.dart, agrega el provider de la siguiente manera:
+///
+/// ```dart
+/// void main() async {
+///   WidgetsFlutterBinding.ensureInitialized();
+///   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+///
+///   runApp(
+///     MultiProvider(
+///       providers: [
+///         ChangeNotifierProvider(
+///           create: (_) => InformacionControlador()..cargarInformacion(),
+///         ),
+///         // ... otros providers que ya tengas
+///       ],
+///       child: const MyApp(),
+///     ),
+///   );
+/// }
+/// ```
+
+/// 2. EJEMPLO: Botón para abrir la vista de edición (para administradores)
+class BotonEditarInformacion extends StatelessWidget {
+  const BotonEditarInformacion({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const EditarInformacionVista(),
+          ),
+        );
+      },
+      icon: const Icon(Icons.edit),
+      label: const Text('Editar Información del Negocio'),
+    );
+  }
+}
+
+/// 3. EJEMPLO: Mostrar información del negocio en la página de inicio
+class InfoNegocioWidget extends StatelessWidget {
+  const InfoNegocioWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<InformacionControlador>(
+      builder: (context, controlador, child) {
+        if (controlador.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (controlador.error != null) {
+          return Center(
+            child: Text(
+              'Error: ${controlador.error}',
+              style: const TextStyle(color: Colors.red),
+            ),
+          );
+        }
+
+        final info = controlador.informacion;
+        if (info == null) {
+          return const Center(child: Text('No hay información disponible'));
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Nombre del negocio
+            Text(
+              info.galeria.nombre,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Slogan
+            Text(
+              info.redesSociales.slogan,
+              style: const TextStyle(
+                fontSize: 16,
+                fontStyle: FontStyle.italic,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Horarios
+            Text(
+              'Horarios de Atención:',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text('Lunes a Viernes: ${info.galeria.horarioAtencion.lunesViernes}'),
+            Text('Sábado: ${info.galeria.horarioAtencion.sabado}'),
+            Text('Domingo: ${info.galeria.horarioAtencion.domingo}'),
+            const SizedBox(height: 16),
+
+            // Contacto
+            Text(
+              'Contacto:',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text('📧 ${info.email}'),
+            Text('📱 WhatsApp: ${info.whatsapp}'),
+            Text('📞 Teléfono: ${info.redesSociales.telefono}'),
+            Text('📍 ${info.direccion}'),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// 4. EJEMPLO: Verificar si se aceptan pedidos online
+class EstadoPedidosWidget extends StatelessWidget {
+  const EstadoPedidosWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final controlador = context.watch<InformacionControlador>();
+    final configuracion = controlador.configuracion;
+
+    if (configuracion == null) {
+      return const SizedBox.shrink();
+    }
+
+    if (!configuracion.aceptaPedidosOnline) {
+      return Card(
+        color: Colors.orange[100],
+        child: const Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Icon(Icons.info, color: Colors.orange),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Actualmente no estamos aceptando pedidos online',
+                  style: TextStyle(color: Colors.orange),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Card(
+      color: Colors.green[100],
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.green),
+                SizedBox(width: 8),
+                Text(
+                  'Pedidos Online Disponibles',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text('Costo de envío: \$${configuracion.costoEnvio}'),
+            Text('Monto mínimo: \$${configuracion.montoMinimoEnvio}'),
+            Text('Tiempo de preparación: ${configuracion.tiempoPreparacionMinimo} horas'),
+            Text('Radio de entrega: ${configuracion.radiusEntregaKm} km'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 5. EJEMPLO: Sección "Sobre Nosotros"
+class SobreNosotrosSection extends StatelessWidget {
+  const SobreNosotrosSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final controlador = context.watch<InformacionControlador>();
+    final galeria = controlador.galeria;
+
+    if (galeria == null) {
+      return const SizedBox.shrink();
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Historia
+          const Text(
+            'Nuestra Historia',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(galeria.historia),
+          const SizedBox(height: 24),
+
+          // Misión
+          const Text(
+            'Misión',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(galeria.mision),
+          const SizedBox(height: 24),
+
+          // Visión
+          const Text(
+            'Visión',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(galeria.vision),
+          const SizedBox(height: 24),
+
+          // Valores
+          const Text(
+            'Nuestros Valores',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          ...galeria.valores.map((valor) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  children: [
+                    const Icon(Icons.check, color: Colors.green, size: 20),
+                    const SizedBox(width: 8),
+                    Text(valor),
+                  ],
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+}
+
+/// 6. EJEMPLO: Redes Sociales
+class RedesSocialesWidget extends StatelessWidget {
+  const RedesSocialesWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final controlador = context.watch<InformacionControlador>();
+    final redes = controlador.redesSociales;
+
+    if (redes == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (redes.facebook.isNotEmpty)
+          IconButton(
+            icon: const Icon(Icons.facebook),
+            onPressed: () {
+              // Abrir Facebook
+              // launch(redes.facebook);
+            },
+          ),
+        if (redes.instagram.isNotEmpty)
+          IconButton(
+            icon: const Icon(Icons.camera_alt),
+            onPressed: () {
+              // Abrir Instagram
+              // launch(redes.instagram);
+            },
+          ),
+        if (redes.tiktok.isNotEmpty)
+          IconButton(
+            icon: const Icon(Icons.music_note),
+            onPressed: () {
+              // Abrir TikTok
+              // launch(redes.tiktok);
+            },
+          ),
+        if (redes.youtube.isNotEmpty)
+          IconButton(
+            icon: const Icon(Icons.video_library),
+            onPressed: () {
+              // Abrir YouTube
+              // launch(redes.youtube);
+            },
+          ),
+      ],
+    );
+  }
+}
+
+/// 7. EJEMPLO: Actualizar información (para administradores)
+class EjemploActualizaciones extends StatelessWidget {
+  const EjemploActualizaciones({super.key});
+
+  Future<void> _togglePedidos(BuildContext context, bool estado) async {
+    final controlador = context.read<InformacionControlador>();
+    final resultado = await controlador.togglePedidosOnline(estado);
+
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          resultado
+              ? 'Pedidos ${estado ? "activados" : "desactivados"}'
+              : 'Error al actualizar',
+        ),
+        backgroundColor: resultado ? Colors.green : Colors.red,
+      ),
+    );
+  }
+
+  Future<void> _actualizarHorarios(BuildContext context) async {
+    final controlador = context.read<InformacionControlador>();
+
+    final nuevosHorarios = HorarioAtencion(
+      domingo: 'Cerrado',
+      lunesViernes: '9:00 AM - 7:00 PM',
+      sabado: '10:00 AM - 6:00 PM',
+    );
+
+    final resultado = await controlador.actualizarHorarios(nuevosHorarios);
+
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          resultado ? 'Horarios actualizados' : 'Error al actualizar',
+        ),
+        backgroundColor: resultado ? Colors.green : Colors.red,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controlador = context.watch<InformacionControlador>();
+    final config = controlador.configuracion;
+
+    if (config == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      children: [
+        SwitchListTile(
+          title: const Text('Aceptar Pedidos Online'),
+          value: config.aceptaPedidosOnline,
+          onChanged: (value) => _togglePedidos(context, value),
+        ),
+        ElevatedButton(
+          onPressed: () => _actualizarHorarios(context),
+          child: const Text('Actualizar Horarios de Ejemplo'),
+        ),
+      ],
+    );
+  }
+}
+
+/// 8. EJEMPLO: Escuchar cambios en tiempo real
+class InfoTiempoRealWidget extends StatelessWidget {
+  const InfoTiempoRealWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final controlador = context.read<InformacionControlador>();
+
+    return StreamBuilder<InformacionNegocio?>(
+      stream: controlador.streamInformacion(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const CircularProgressIndicator();
+        }
+
+        if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        }
+
+        if (!snapshot.hasData) {
+          return const Text('No hay datos disponibles');
+        }
+
+        final info = snapshot.data!;
+        return Card(
+          child: ListTile(
+            leading: const Icon(Icons.business),
+            title: Text(info.galeria.nombre),
+            subtitle: Text(info.redesSociales.slogan),
+            trailing: Text(
+              'Actualizado: ${info.fechaActualizacion.hour}:${info.fechaActualizacion.minute}',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}

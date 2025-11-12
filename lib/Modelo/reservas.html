@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservas - REPOSTERIA ARLEX</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-birthday-cake"></i>
+                <span>REPOSTERIA ARLEX</span>
+            </a>
+            <nav class="nav">
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="catalogo.html">Catálogo</a></li>
+                    <li><a href="reservas.html" class="active">Reservas</a></li>
+                    <li><a href="contacto.html">Contacto</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Banner de Reservas -->
+    <section class="reservas-banner">
+        <div class="container">
+            <div class="banner-content">
+                <h1>Reserva tu Pedido</h1>
+                <p>Planifica tu celebración con anticipación y asegura la disponibilidad de nuestros deliciosos postres</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tipos de Reserva -->
+    <section class="reservas-types">
+        <div class="container">
+            <h2 class="section-title">Tipos de Reserva</h2>
+            <div class="types-grid">
+                <!-- Reserva Rápida -->
+                <div class="type-card">
+                    <div class="type-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3>Reserva Rápida</h3>
+                    <p>Para pedidos con 24-48 horas de anticipación</p>
+                    <ul class="type-features">
+                        <li>Productos del menú regular</li>
+                        <li>Entrega estándar</li>
+                        <li>Confirmación inmediata</li>
+                    </ul>
+                    <button class="btn-reserva" data-type="rapida">Reservar Ahora</button>
+                </div>
+
+                <!-- Reserva Personalizada -->
+                <div class="type-card">
+                    <div class="type-icon">
+                        <i class="fas fa-palette"></i>
+                    </div>
+                    <h3>Reserva Personalizada</h3>
+                    <p>Para pedidos especiales con 3-7 días de anticipación</p>
+                    <ul class="type-features">
+                        <li>Tortas personalizadas</li>
+                        <li>Decoraciones especiales</li>
+                        <li>Sabores únicos</li>
+                    </ul>
+                    <button class="btn-reserva" data-type="personalizada">Reservar Ahora</button>
+                </div>
+
+                <!-- Reserva de Eventos -->
+                <div class="type-card">
+                    <div class="type-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h3>Reserva de Eventos</h3>
+                    <p>Para eventos grandes con 7-14 días de anticipación</p>
+                    <ul class="type-features">
+                        <li>Catering completo</li>
+                        <li>Mesas de postres</li>
+                        <li>Servicio en el lugar</li>
+                    </ul>
+                    <button class="btn-reserva" data-type="eventos">Reservar Ahora</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Formulario de Reserva -->
+    <section class="reserva-form-section" id="formulario-reserva">
+        <div class="container">
+            <h2 class="section-title">Formulario de Reserva</h2>
+            <div class="form-container">
+                <form class="reserva-form" id="reservaForm">
+                    <!-- Información Personal -->
+                    <div class="form-group">
+                        <h3><i class="fas fa-user"></i> Información Personal</h3>
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="nombre">Nombre Completo *</label>
+                                <input type="text" id="nombre" name="nombre" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="telefono">Teléfono *</label>
+                                <input type="tel" id="telefono" name="telefono" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="email">Correo Electrónico *</label>
+                                <input type="email" id="email" name="email" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="fecha-evento">Fecha del Evento *</label>
+                                <input type="date" id="fecha-evento" name="fecha-evento" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tipo de Reserva -->
+                    <div class="form-group">
+                        <h3><i class="fas fa-list"></i> Tipo de Reserva</h3>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="tipo-reserva" value="rapida" required>
+                                <span class="radio-custom"></span>
+                                Reserva Rápida (24-48 horas)
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="tipo-reserva" value="personalizada" required>
+                                <span class="radio-custom"></span>
+                                Reserva Personalizada (3-7 días)
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="tipo-reserva" value="eventos" required>
+                                <span class="radio-custom"></span>
+                                Reserva de Eventos (7-14 días)
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Productos -->
+                    <div class="form-group">
+                        <h3><i class="fas fa-birthday-cake"></i> Productos Deseados</h3>
+                        <div class="productos-grid">
+                            <div class="producto-item">
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="productos" value="tortas">
+                                    <span class="checkbox-custom"></span>
+                                    Tortas y Pasteles
+                                </label>
+                            </div>
+                            <div class="producto-item">
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="productos" value="postres-individuales">
+                                    <span class="checkbox-custom"></span>
+                                    Postres Individuales
+                                </label>
+                            </div>
+                            <div class="producto-item">
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="productos" value="galletas">
+                                    <span class="checkbox-custom"></span>
+                                    Galletas y Bocaditos
+                                </label>
+                            </div>
+                            <div class="producto-item">
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="productos" value="panaderia">
+                                    <span class="checkbox-custom"></span>
+                                    Panadería
+                                </label>
+                            </div>
+                            <div class="producto-item">
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="productos" value="helados">
+                                    <span class="checkbox-custom"></span>
+                                    Helados y Fríos
+                                </label>
+                            </div>
+                            <div class="producto-item">
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="productos" value="bebidas">
+                                    <span class="checkbox-custom"></span>
+                                    Bebidas
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detalles Adicionales -->
+                    <div class="form-group">
+                        <h3><i class="fas fa-comment"></i> Detalles Adicionales</h3>
+                        <div class="form-field">
+                            <label for="cantidad-personas">Número de Personas</label>
+                            <input type="number" id="cantidad-personas" name="cantidad-personas" min="1" max="500">
+                        </div>
+                        <div class="form-field">
+                            <label for="ocasion">Ocasión Especial</label>
+                            <select id="ocasion" name="ocasion">
+                                <option value="">Selecciona una opción</option>
+                                <option value="cumpleanos">Cumpleaños</option>
+                                <option value="boda">Boda</option>
+                                <option value="graduacion">Graduación</option>
+                                <option value="corporativo">Evento Corporativo</option>
+                                <option value="baby-shower">Baby Shower</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="comentarios">Comentarios Especiales</label>
+                            <textarea id="comentarios" name="comentarios" rows="4" placeholder="Describe cualquier detalle especial, alergias, preferencias de sabor, etc."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Información de Entrega -->
+                    <div class="form-group">
+                        <h3><i class="fas fa-truck"></i> Información de Entrega</h3>
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="direccion">Dirección de Entrega *</label>
+                                <input type="text" id="direccion" name="direccion" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="ciudad">Ciudad *</label>
+                                <input type="text" id="ciudad" name="ciudad" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="hora-entrega">Hora Preferida de Entrega</label>
+                                <input type="time" id="hora-entrega" name="hora-entrega">
+                            </div>
+                            <div class="form-field">
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="entrega-local" value="si">
+                                    <span class="checkbox-custom"></span>
+                                    Prefiero recoger en el local
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botón de Envío -->
+                    <div class="form-submit">
+                        <button type="submit" class="btn-submit">
+                            <i class="fas fa-paper-plane"></i>
+                            Enviar Reserva
+                        </button>
+                        <p class="form-note">
+                            * Campos obligatorios. Nos pondremos en contacto contigo en las próximas 24 horas para confirmar tu reserva.
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Información de Contacto -->
+    <section class="contact-info">
+        <div class="container">
+            <h2 class="section-title">¿Necesitas Ayuda?</h2>
+            <div class="contact-grid">
+                <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    <h3>Llamada Directa</h3>
+                    <p>+57 300 123 4567</p>
+                    <span>Lunes a Viernes: 8:00 AM - 6:00 PM</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fab fa-whatsapp"></i>
+                    <h3>WhatsApp</h3>
+                    <p>+57 300 123 4567</p>
+                    <span>Respuesta rápida 24/7</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <h3>Correo Electrónico</h3>
+                    <p>reservas@reposteriaarlex.com</p>
+                    <span>Respuesta en 24 horas</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>REPOSTERIA ARLEX</h3>
+                    <p>Deliciosos postres artesanales hechos con amor</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Contacto</h4>
+                    <p><i class="fas fa-phone"></i> +57 300 123 4567</p>
+                    <p><i class="fas fa-envelope"></i> info@reposteriaarlex.com</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Síguenos</h4>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

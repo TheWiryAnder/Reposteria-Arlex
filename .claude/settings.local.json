@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(firebase deploy:*)",
+      "Bash(flutter run:*)",
+      "Bash(nc:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(flutter build:*)",
+      "Bash(\"c:\\Users\\USUARIO\\Documents\\CLASES 2025-2\\INGENIERIA DE SOFTWARE 2\\Project\\reposteria_arlex\\lib\\pantallas\\principal\\home_screen_temp.dart\")",
+      "Bash(firebase init:*)",
+      "Bash(npm install:*)",
+      "Bash(flutter pub get:*)",
+      "Bash(flutter clean:*)",
+      "Bash(taskkill:*)",
+      "Bash(nul)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

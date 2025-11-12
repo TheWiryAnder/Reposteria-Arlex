@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // TEMPORAL: Permitir todo durante desarrollo e inicialización
+    // ⚠️ IMPORTANTE: Cambiar estas reglas después de inicializar datos
+    // ⚠️ NO USAR EN PRODUCCIÓN
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
