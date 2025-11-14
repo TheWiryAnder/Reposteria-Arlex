@@ -15,7 +15,9 @@
       "Bash(nul)",
       "Bash(git push:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(firebase login:*)",
+      "Bash(del vercel.json)"
     ],
     "deny": [],
     "ask": []
