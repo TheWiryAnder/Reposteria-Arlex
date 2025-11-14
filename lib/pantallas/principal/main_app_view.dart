@@ -74,119 +74,19 @@ class _MainAppViewState extends State<MainAppView> {
         screens.add(const ProfileScreen());
 
         return Scaffold(
-          appBar: AppBar(
-            centerTitle: false,
-            titleSpacing: 16,
-            title: StreamBuilder<DocumentSnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('informacion_negocio')
-                  .doc('config')
-                  .snapshots(),
-              builder: (context, snapshot) {
-                String nombre = AppConfig.appName;
-                String? logoUrl;
-
-                if (snapshot.hasData && snapshot.data?.data() != null) {
-                  final data = snapshot.data!.data() as Map<String, dynamic>;
-
-                  // Intentar obtener el nombre de la estructura anidada primero (nuevo formato)
-                  if (data.containsKey('galeria') && data['galeria'] is Map) {
-                    final galeria = data['galeria'] as Map<String, dynamic>;
-                    nombre = galeria['nombre'] ?? data['nombre'] ?? AppConfig.appName;
-                    logoUrl = galeria['logo'];
-                  } else {
-                    // Fallback a estructura plana (formato antiguo)
-                    nombre = data['nombre'] ?? AppConfig.appName;
-                    logoUrl = data['logo'];
-                  }
-                }
-
-                return Row(
-                  children: [
-                    // Logo y nombre (izquierda)
-                    InkWell(
-                      onTap: _navigateToHome,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (logoUrl != null && logoUrl.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(right: 12),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.network(
-                                    logoUrl,
-                                    height: 40,
-                                    width: 40,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return const Icon(Icons.store, size: 32, color: Colors.white);
-                                    },
-                                  ),
-                                ),
-                              ),
-                            Text(nombre, style: const TextStyle(color: Colors.white)),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // Spacer para centrar los módulos
-                    const Spacer(),
-
-                    // Módulos centrados - Productos y Conócenos
-                    _buildNavItem('Productos', 1),
-                    const SizedBox(width: 24),
-                    if (!isAdmin)
-                      _buildConocenosButton(),
-
-                    // Spacer para mantener centrado
-                    const Spacer(),
-                  ],
-                );
-              },
-            ),
-            actions: [
-              if (isAuthenticated) ...[
-                // Carrito icon (solo clientes)
-                if (!isEmployee && !isAdmin)
-                  _buildCartIcon(),
-                const SizedBox(width: 8),
-
-                // Notificaciones dropdown
-                _buildNotificationDropdown(authProvider),
-                const SizedBox(width: 8),
-
-                // Perfil dropdown
-                _buildProfileDropdown(authProvider),
-                const SizedBox(width: 16),
-              ] else ...[
-                // Botones para usuarios no autenticados
-                OutlinedButton(
-                  onPressed: () => _navigateToLogin(context),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.white, width: 1.5),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  ),
-                  child: const Text('Iniciar Sesión'),
-                ),
-                const SizedBox(width: 8),
-                OutlinedButton(
-                  onPressed: () => _navigateToRegister(context),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.white, width: 1.5),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  ),
-                  child: const Text('Registrarse'),
-                ),
-                const SizedBox(width: 16),
-              ],
-            ],
+          appBar: _buildResponsiveAppBar(
+            context,
+            isAuthenticated,
+            isEmployee,
+            isAdmin,
+            authProvider,
+          ),
+          drawer: _buildResponsiveDrawer(
+            context,
+            isAuthenticated,
+            isEmployee,
+            isAdmin,
+            authProvider,
           ),
           body: IndexedStack(
             index: _currentIndex,
@@ -194,6 +94,366 @@ class _MainAppViewState extends State<MainAppView> {
           ),
         );
       },
+    );
+  }
+
+  PreferredSizeWidget _buildResponsiveAppBar(
+    BuildContext context,
+    bool isAuthenticated,
+    bool isEmployee,
+    bool isAdmin,
+    AuthProvider authProvider,
+  ) {
+    return AppBar(
+      centerTitle: false,
+      titleSpacing: 16,
+      // Mostrar botón del drawer solo en móvil
+      automaticallyImplyLeading: MediaQuery.of(context).size.width < 800,
+      leading: MediaQuery.of(context).size.width < 800
+          ? Builder(
+              builder: (context) => IconButton(
+                icon: const Icon(Icons.menu, color: Colors.white),
+                onPressed: () => Scaffold.of(context).openDrawer(),
+              ),
+            )
+          : null,
+      title: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('informacion_negocio')
+            .doc('config')
+            .snapshots(),
+        builder: (context, snapshot) {
+          String nombre = AppConfig.appName;
+          String? logoUrl;
+
+          if (snapshot.hasData && snapshot.data?.data() != null) {
+            final data = snapshot.data!.data() as Map<String, dynamic>;
+
+            // Intentar obtener el nombre de la estructura anidada primero (nuevo formato)
+            if (data.containsKey('galeria') && data['galeria'] is Map) {
+              final galeria = data['galeria'] as Map<String, dynamic>;
+              nombre = galeria['nombre'] ?? data['nombre'] ?? AppConfig.appName;
+              logoUrl = galeria['logo'];
+            } else {
+              // Fallback a estructura plana (formato antiguo)
+              nombre = data['nombre'] ?? AppConfig.appName;
+              logoUrl = data['logo'];
+            }
+          }
+
+          final isMobile = MediaQuery.of(context).size.width < 800;
+
+          return Row(
+            children: [
+              // Logo y nombre (izquierda) - Siempre visible
+              InkWell(
+                onTap: _navigateToHome,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (logoUrl != null && logoUrl.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              logoUrl,
+                              height: 40,
+                              width: 40,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(Icons.store, size: 32, color: Colors.white);
+                              },
+                            ),
+                          ),
+                        ),
+                      // Mostrar nombre siempre, ajustar tamaño según dispositivo (más grande para destacar)
+                      Flexible(
+                        child: Text(
+                          nombre,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: isMobile ? 16 : 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Solo mostrar navegación en escritorio
+              if (!isMobile) ...[
+                // Spacer para centrar los módulos
+                const Spacer(),
+
+                // Módulos centrados - Productos y Conócenos
+                _buildNavItem('Productos', 1),
+                const SizedBox(width: 24),
+                if (!isAdmin)
+                  _buildConocenosButton(),
+
+                // Spacer para mantener centrado
+                const Spacer(),
+              ],
+            ],
+          );
+        },
+      ),
+      actions: _buildAppBarActions(context, isAuthenticated, isEmployee, isAdmin, authProvider),
+    );
+  }
+
+  List<Widget> _buildAppBarActions(
+    BuildContext context,
+    bool isAuthenticated,
+    bool isEmployee,
+    bool isAdmin,
+    AuthProvider authProvider,
+  ) {
+    final isMobile = MediaQuery.of(context).size.width < 800;
+
+    if (isMobile) {
+      // En móvil, solo mostrar carrito y notificaciones (si está autenticado)
+      if (isAuthenticated) {
+        return [
+          if (!isEmployee && !isAdmin)
+            _buildCartIcon(),
+          const SizedBox(width: 8),
+          _buildNotificationDropdown(authProvider),
+          const SizedBox(width: 8),
+        ];
+      }
+      // Si no está autenticado, no mostrar nada (todo en el drawer)
+      return [];
+    }
+
+    // En escritorio, mantener el diseño original
+    if (isAuthenticated) {
+      return [
+        if (!isEmployee && !isAdmin)
+          _buildCartIcon(),
+        const SizedBox(width: 8),
+        _buildNotificationDropdown(authProvider),
+        const SizedBox(width: 8),
+        _buildProfileDropdown(authProvider),
+        const SizedBox(width: 16),
+      ];
+    } else {
+      return [
+        OutlinedButton(
+          onPressed: () => _navigateToLogin(context),
+          style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: Colors.white, width: 1.5),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          ),
+          child: const Text('Iniciar Sesión'),
+        ),
+        const SizedBox(width: 8),
+        OutlinedButton(
+          onPressed: () => _navigateToRegister(context),
+          style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: Colors.white, width: 1.5),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          ),
+          child: const Text('Registrarse'),
+        ),
+        const SizedBox(width: 16),
+      ];
+    }
+  }
+
+  Widget? _buildResponsiveDrawer(
+    BuildContext context,
+    bool isAuthenticated,
+    bool isEmployee,
+    bool isAdmin,
+    AuthProvider authProvider,
+  ) {
+    final isMobile = MediaQuery.of(context).size.width < 800;
+
+    // Solo mostrar drawer en móvil
+    if (!isMobile) return null;
+
+    return Drawer(
+      child: Column(
+        children: [
+          // Header del drawer
+          _buildDrawerHeader(authProvider, isAuthenticated),
+
+          // Opciones del menú
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                // Productos
+                _buildDrawerItem(
+                  icon: Icons.shopping_bag,
+                  title: 'Productos',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _navigateToSection(1);
+                  },
+                  isSelected: _currentIndex == 1,
+                ),
+
+                // Conócenos (solo si no es admin)
+                if (!isAdmin)
+                  _buildDrawerItem(
+                    icon: Icons.info_outline,
+                    title: 'Conócenos',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ConocenosScreen(),
+                        ),
+                      );
+                    },
+                  ),
+
+                const Divider(),
+
+                // Opciones según autenticación
+                if (isAuthenticated) ...[
+                  // Perfil
+                  _buildDrawerItem(
+                    icon: Icons.person,
+                    title: 'Información',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _navigateToSection(_getProfileIndex());
+                    },
+                    isSelected: _currentIndex == _getProfileIndex(),
+                  ),
+
+                  // Mis Pedidos
+                  _buildDrawerItem(
+                    icon: Icons.shopping_bag,
+                    title: 'Mis Pedidos',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HistorialPedidosScreen(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  const Divider(),
+
+                  // Cerrar Sesión
+                  _buildDrawerItem(
+                    icon: Icons.logout,
+                    title: 'Cerrar Sesión',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _handleLogout();
+                    },
+                    textColor: Colors.red,
+                    iconColor: Colors.red,
+                  ),
+                ] else ...[
+                  // Iniciar Sesión
+                  _buildDrawerItem(
+                    icon: Icons.login,
+                    title: 'Iniciar Sesión',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _navigateToLogin(context);
+                    },
+                  ),
+
+                  // Registrarse
+                  _buildDrawerItem(
+                    icon: Icons.person_add,
+                    title: 'Registrarse',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _navigateToRegister(context);
+                    },
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawerHeader(AuthProvider authProvider, bool isAuthenticated) {
+    return UserAccountsDrawerHeader(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Theme.of(context).primaryColor,
+            Theme.of(context).primaryColor.withValues(alpha: 0.7),
+          ],
+        ),
+      ),
+      currentAccountPicture: CircleAvatar(
+        backgroundColor: Colors.white,
+        child: Icon(
+          isAuthenticated ? Icons.person : Icons.store,
+          size: 40,
+          color: Theme.of(context).primaryColor,
+        ),
+      ),
+      accountName: Text(
+        isAuthenticated
+            ? authProvider.currentUser?.nombre ?? 'Usuario'
+            : AppConfig.appName,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
+        ),
+      ),
+      accountEmail: Text(
+        isAuthenticated
+            ? authProvider.currentUser?.email ?? ''
+            : 'Bienvenido',
+        style: const TextStyle(fontSize: 14),
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    bool isSelected = false,
+    Color? textColor,
+    Color? iconColor,
+  }) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: iconColor ?? (isSelected ? Theme.of(context).primaryColor : null),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: textColor,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
+      selected: isSelected,
+      selectedTileColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+      onTap: onTap,
     );
   }
 
