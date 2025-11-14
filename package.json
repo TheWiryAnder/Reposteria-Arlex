@@ -1,0 +1,8 @@
+{
+  "name": "reposteria-arlex",
+  "version": "1.0.0",
+  "description": "Reposteria Arlex - Flutter Web Application",
+  "scripts": {
+    "build": "echo 'Using pre-built Flutter files from build/web'"
+  }
+}
