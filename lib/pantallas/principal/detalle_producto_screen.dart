@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
-import '../../../modelos/producto_modelo.dart';
-import '../../../providers/auth_provider_simple.dart';
-import '../../../providers/carrito_provider.dart';
-import '../../../compartidos/widgets/message_helpers.dart';
-import '../../../pantallas/auth/login_vista.dart';
+import '../../modelos/producto_modelo.dart';
+import '../../providers/auth_provider_simple.dart';
+import '../../providers/carrito_provider.dart';
+import '../../compartidos/widgets/message_helpers.dart';
+import '../auth/login_vista.dart';
 
-class DetalleProductoVista extends StatefulWidget {
+class DetalleProductoScreen extends StatefulWidget {
   final ProductoModelo producto;
 
-  const DetalleProductoVista({
+  const DetalleProductoScreen({
     super.key,
     required this.producto,
   });
 
   @override
-  State<DetalleProductoVista> createState() => _DetalleProductoVistaState();
+  State<DetalleProductoScreen> createState() => _DetalleProductoScreenState();
 }
 
-class _DetalleProductoVistaState extends State<DetalleProductoVista> {
+class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
   int _cantidad = 1;
 
   @override
@@ -139,9 +139,9 @@ class _DetalleProductoVistaState extends State<DetalleProductoVista> {
 
                   const SizedBox(height: 24),
 
-                  // Descripci髇
+                  // Descripci贸n
                   const Text(
-                    'Descripci髇',
+                    'Descripci贸n',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -151,7 +151,7 @@ class _DetalleProductoVistaState extends State<DetalleProductoVista> {
                   Text(
                     producto.descripcion.isNotEmpty
                         ? producto.descripcion
-                        : 'Sin descripci髇 disponible',
+                        : 'Sin descripci贸n disponible',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey[700],
@@ -161,7 +161,7 @@ class _DetalleProductoVistaState extends State<DetalleProductoVista> {
 
                   const SizedBox(height: 32),
 
-                  // Controles de cantidad y bot髇 de compra
+                  // Controles de cantidad y bot贸n de compra
                   if (!sinStock) ...[
                     const Text(
                       'Cantidad',
@@ -226,7 +226,7 @@ class _DetalleProductoVistaState extends State<DetalleProductoVista> {
                               if (!isAuthenticated) {
                                 showAppMessage(
                                   context,
-                                  'Debes iniciar sesi髇 para realizar compras',
+                                  'Debes iniciar sesi贸n para realizar compras',
                                   type: MessageType.warning,
                                 );
                                 Navigator.push(
@@ -323,32 +323,6 @@ class _DetalleProductoVistaState extends State<DetalleProductoVista> {
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.red.shade900,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (stock <= 5) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.orange.shade100,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.orange.shade300),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.warning, size: 20, color: Colors.orange.shade900),
-            const SizedBox(width: 8),
-            Text(
-              'Solo quedan $stock unidades',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.orange.shade900,
                 fontWeight: FontWeight.bold,
               ),
             ),

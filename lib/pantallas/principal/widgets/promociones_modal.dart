@@ -265,11 +265,12 @@ class _PromocionesModalState extends State<PromocionesModal> {
         // Restar espacio para: badge (60), título (80), descripción (60), fecha (40), botón (70), padding (40)
         final availableHeight = constraints.maxHeight - 280;
 
-        return Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+        return SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
               // Imagen de la promoción
               if (imagenUrl != null && imagenUrl.isNotEmpty)
                 Container(
@@ -471,6 +472,7 @@ class _PromocionesModalState extends State<PromocionesModal> {
               ),
             ],
           ),
+        ),
         );
       },
     );

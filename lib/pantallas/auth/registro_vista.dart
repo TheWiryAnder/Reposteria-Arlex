@@ -18,6 +18,8 @@ class _RegistroVistaState extends State<RegistroVista> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
@@ -237,21 +239,45 @@ class _RegistroVistaState extends State<RegistroVista> {
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _passwordController,
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 labelText: 'Contraseña',
-                                prefixIcon: Icon(Icons.lock),
+                                prefixIcon: const Icon(Icons.lock),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_outlined
+                                        : Icons.visibility_off_outlined,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                ),
                               ),
-                              obscureText: true,
+                              obscureText: _obscurePassword,
                               validator: _validatePassword,
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _confirmPasswordController,
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 labelText: 'Confirmar contraseña',
-                                prefixIcon: Icon(Icons.lock_outline),
+                                prefixIcon: const Icon(Icons.lock_outline),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscureConfirmPassword
+                                        ? Icons.visibility_outlined
+                                        : Icons.visibility_off_outlined,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscureConfirmPassword = !_obscureConfirmPassword;
+                                    });
+                                  },
+                                ),
                               ),
-                              obscureText: true,
+                              obscureText: _obscureConfirmPassword,
                               validator: _validateConfirmPassword,
                             ),
                             const SizedBox(height: 24),

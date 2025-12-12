@@ -327,13 +327,29 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
+          final width = MediaQuery.of(context).size.width;
+          final isMobile = width < 600;
+
           return AlertDialog(
             title: Text(isEditing ? 'Editar Categoría' : 'Nueva Categoría'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 16 : 24,
+              vertical: 20,
+            ),
+            insetPadding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 16 : 40,
+              vertical: 24,
+            ),
+            content: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isMobile ? width - 32 : 500,
+                maxHeight: MediaQuery.of(context).size.height * 0.7,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   TextField(
                     controller: nombreController,
                     decoration: const InputDecoration(
@@ -432,6 +448,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                   ),
                 ],
               ),
+            ),
             ),
             actions: [
               TextButton(

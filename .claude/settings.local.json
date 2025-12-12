@@ -1,25 +1,21 @@
 {
   "permissions": {
     "allow": [
-      "Bash(firebase deploy:*)",
+      "Bash(Stop-Process -Force 2)",
       "Bash(flutter run:*)",
-      "Bash(nc:*)",
-      "Bash(flutter analyze:*)",
-      "Bash(flutter build:*)",
-      "Bash(\"c:\\Users\\USUARIO\\Documents\\CLASES 2025-2\\INGENIERIA DE SOFTWARE 2\\Project\\reposteria_arlex\\lib\\pantallas\\principal\\home_screen_temp.dart\")",
-      "Bash(firebase init:*)",
-      "Bash(npm install:*)",
-      "Bash(flutter pub get:*)",
-      "Bash(flutter clean:*)",
-      "Bash(taskkill:*)",
+      "Bash(clip:*)",
+      "Bash(timeout /t 25 /nobreak)",
       "Bash(nul)",
-      "Bash(git push:*)",
+      "Bash(exit 0)",
+      "Bash(flutter clean:*)",
+      "Bash(flutter pub get:*)",
+      "Bash(taskkill:*)",
+      "Bash(timeout /t 3 /nobreak)",
+      "Bash(timeout /t 15 /nobreak)",
+      "Bash(flutter build:*)",
+      "Bash(firebase deploy:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(firebase login:*)",
-      "Bash(del vercel.json)",
-      "Bash(git remote set-url:*)",
-      "Bash(git rm:*)"
+      "Bash(del nul)"
     ],
     "deny": [],
     "ask": []

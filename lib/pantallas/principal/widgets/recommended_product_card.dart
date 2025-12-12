@@ -38,167 +38,156 @@ class _RecommendedProductCardState extends State<RecommendedProductCard> {
         onTap: widget.onTap,
         borderRadius: BorderRadius.circular(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Imagen con proporción fija
-            AspectRatio(
-              aspectRatio: 1.2,
+            // Imagen del producto
+            SizedBox(
+              height: isMobile ? 110 : 180,
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
-                child: producto.imagenUrl != null
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                child: producto.imagenUrl != null && producto.imagenUrl!.isNotEmpty
                     ? Image.network(
                         producto.imagenUrl!,
                         width: double.infinity,
+                        height: double.infinity,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
-                              borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(16),
-                              ),
-                            ),
+                            color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                             child: Icon(
                               Icons.cake,
-                              size: 50,
+                              size: 60,
                               color: Theme.of(context).primaryColor,
                             ),
                           );
                         },
                       )
                     : Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(16),
-                          ),
-                        ),
+                        color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                         child: Icon(
                           Icons.cake,
-                          size: 50,
+                          size: 60,
                           color: Theme.of(context).primaryColor,
                         ),
                       ),
               ),
             ),
-            // Contenido que se adapta
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(isMobile ? 6 : 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Nombre del producto
+
+            // Información del producto
+            Padding(
+              padding: EdgeInsets.all(isMobile ? 4 : 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Nombre del producto
+                  Text(
+                    producto.nombre,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: isMobile ? 12 : 16,
+                    ),
+                    maxLines: isMobile ? 1 : 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: isMobile ? 2 : 8),
+
+                  // Descripción corta
+                  if (producto.descripcion.isNotEmpty)
                     Text(
-                      producto.nombre,
+                      producto.descripcion,
                       style: TextStyle(
-                        fontSize: isMobile ? 12 : 13,
-                        fontWeight: FontWeight.bold,
+                        fontSize: isMobile ? 10 : 13,
+                        color: Colors.grey.shade600,
                       ),
-                      maxLines: 2,
+                      maxLines: isMobile ? 1 : 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    SizedBox(height: isMobile ? 3 : 4),
 
-                    // Descripción
-                    if (producto.descripcion.isNotEmpty)
-                      Text(
-                        producto.descripcion,
-                        style: TextStyle(
-                          fontSize: isMobile ? 10 : 11,
-                          color: Colors.grey[600],
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                  SizedBox(height: isMobile ? 2 : 8),
+
+                  // Precio
+                  Text(
+                    'S/. ${producto.precio.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: isMobile ? 14 : 20,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
+
+                  SizedBox(height: isMobile ? 3 : 8),
+
+                  // Indicador de disponibilidad
+                  if (sinStock)
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 6 : 8,
+                        vertical: isMobile ? 2 : 4,
                       ),
-
-                    const Spacer(),
-
-                    // Precio
-                    Text(
-                      'S/. ${producto.precio.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: isMobile ? 14 : 16,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColor,
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade100,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.cancel, size: isMobile ? 10 : 16, color: Colors.red.shade900),
+                          SizedBox(width: isMobile ? 3 : 4),
+                          Text(
+                            'Sin stock',
+                            style: TextStyle(
+                              fontSize: isMobile ? 9 : 12,
+                              color: Colors.red.shade900,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 6 : 8,
+                        vertical: isMobile ? 2 : 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade100,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.check_circle, size: isMobile ? 10 : 16, color: Colors.green.shade700),
+                          SizedBox(width: isMobile ? 3 : 4),
+                          Text(
+                            'Disponible',
+                            style: TextStyle(
+                              fontSize: isMobile ? 9 : 12,
+                              color: Colors.green.shade900,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    SizedBox(height: isMobile ? 4 : 6),
 
-                    // Indicador de stock
-                    if (sinStock)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade100,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          'Sin stock',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.red.shade900,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      )
-                    else if (producto.stock <= 5)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.shade100,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          'Solo ${producto.stock}',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.orange.shade900,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      )
-                    else
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade100,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.check_circle, size: 12, color: Colors.green.shade700),
-                            const SizedBox(width: 2),
-                            Text(
-                              'Disponible',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.green.shade900,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                  SizedBox(height: isMobile ? 4 : 12),
 
-                    SizedBox(height: isMobile ? 6 : 8),
-
-                    // Contador de cantidad y botón de compra
-                    Row(
-                      children: [
-                        // Contador de cantidad
-                        Container(
+                  // Contador de cantidad y botón de compra
+                  Row(
+                    children: [
+                      // Contador de cantidad
+                      Expanded(
+                        flex: 2,
+                        child: Container(
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.grey.shade300),
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                               // Botón decrementar
                               InkWell(
@@ -210,10 +199,10 @@ class _RecommendedProductCardState extends State<RecommendedProductCard> {
                                         });
                                       },
                                 child: Container(
-                                  padding: EdgeInsets.all(isMobile ? 2 : 3),
+                                  padding: EdgeInsets.all(isMobile ? 3 : 6),
                                   child: Icon(
                                     Icons.remove,
-                                    size: isMobile ? 10 : 12,
+                                    size: isMobile ? 12 : 16,
                                     color: sinStock || _cantidad <= 1
                                         ? Colors.grey.shade400
                                         : Theme.of(context).primaryColor,
@@ -223,13 +212,13 @@ class _RecommendedProductCardState extends State<RecommendedProductCard> {
                               // Cantidad
                               Container(
                                 padding: EdgeInsets.symmetric(
-                                  horizontal: isMobile ? 3 : 4,
+                                  horizontal: isMobile ? 4 : 8,
                                 ),
                                 child: Text(
                                   '$_cantidad',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: isMobile ? 10 : 11,
+                                    fontSize: isMobile ? 11 : 14,
                                   ),
                                 ),
                               ),
@@ -243,10 +232,10 @@ class _RecommendedProductCardState extends State<RecommendedProductCard> {
                                         });
                                       },
                                 child: Container(
-                                  padding: EdgeInsets.all(isMobile ? 2 : 3),
+                                  padding: EdgeInsets.all(isMobile ? 3 : 6),
                                   child: Icon(
                                     Icons.add,
-                                    size: isMobile ? 10 : 12,
+                                    size: isMobile ? 12 : 16,
                                     color: sinStock || _cantidad >= producto.stock
                                         ? Colors.grey.shade400
                                         : Theme.of(context).primaryColor,
@@ -256,83 +245,84 @@ class _RecommendedProductCardState extends State<RecommendedProductCard> {
                             ],
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        // Botón de compra
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: sinStock
-                                ? null
-                                : () {
-                                    final authProvider = AuthProvider.instance;
-                                    final carritoProvider = CarritoProvider.instance;
-                                    final bool isAuthenticated = authProvider.authState == AuthState.authenticated;
+                      ),
+                      SizedBox(width: isMobile ? 4 : 6),
+                      // Botón de compra
+                      Expanded(
+                        flex: 3,
+                        child: ElevatedButton.icon(
+                          onPressed: sinStock
+                              ? null
+                              : () {
+                                  final authProvider = AuthProvider.instance;
+                                  final carritoProvider = CarritoProvider.instance;
+                                  final bool isAuthenticated = authProvider.authState == AuthState.authenticated;
 
-                                    if (!isAuthenticated) {
-                                      showAppMessage(
-                                        context,
-                                        'Debes iniciar sesión para realizar compras',
-                                        type: MessageType.warning,
-                                      );
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => const LoginVista(),
-                                        ),
-                                      );
-                                      return;
-                                    }
-
-                                    if (authProvider.currentUser?.rol == 'empleado') {
-                                      showAppMessage(
-                                        context,
-                                        'Los empleados no pueden realizar compras',
-                                        type: MessageType.warning,
-                                      );
-                                      return;
-                                    }
-
-                                    // Agregar producto al carrito múltiples veces según cantidad
-                                    for (int i = 0; i < _cantidad; i++) {
-                                      carritoProvider.agregarProducto(producto);
-                                    }
-
+                                  if (!isAuthenticated) {
                                     showAppMessage(
                                       context,
-                                      '${producto.nombre} x$_cantidad - Agregado al carrito',
-                                      type: MessageType.success,
+                                      'Debes iniciar sesión para realizar compras',
+                                      type: MessageType.warning,
                                     );
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const LoginVista(),
+                                      ),
+                                    );
+                                    return;
+                                  }
 
-                                    // Resetear cantidad
-                                    setState(() {
-                                      _cantidad = 1;
-                                    });
-                                  },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context).colorScheme.primary,
-                              foregroundColor: Colors.white,
-                              padding: EdgeInsets.symmetric(
-                                vertical: isMobile ? 4 : 6,
-                                horizontal: isMobile ? 4 : 6,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              elevation: 2,
+                                  if (authProvider.currentUser?.rol == 'empleado') {
+                                    showAppMessage(
+                                      context,
+                                      'Los empleados no pueden realizar compras',
+                                      type: MessageType.warning,
+                                    );
+                                    return;
+                                  }
+
+                                  // Agregar producto al carrito múltiples veces según cantidad
+                                  for (int i = 0; i < _cantidad; i++) {
+                                    carritoProvider.agregarProducto(producto);
+                                  }
+
+                                  showAppMessage(
+                                    context,
+                                    '${producto.nombre} x$_cantidad - Agregado al carrito',
+                                    type: MessageType.success,
+                                  );
+
+                                  // Resetear cantidad
+                                  setState(() {
+                                    _cantidad = 1;
+                                  });
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(
+                              vertical: isMobile ? 5 : 8,
+                              horizontal: isMobile ? 4 : 8,
                             ),
-                            icon: Icon(Icons.shopping_cart, size: isMobile ? 12 : 14),
-                            label: Text(
-                              'Comprar',
-                              style: TextStyle(
-                                fontSize: isMobile ? 9 : 10,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            elevation: 2,
+                          ),
+                          icon: Icon(Icons.shopping_cart, size: isMobile ? 12 : 18),
+                          label: Text(
+                            'Comprar',
+                            style: TextStyle(
+                              fontSize: isMobile ? 10 : 14,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],

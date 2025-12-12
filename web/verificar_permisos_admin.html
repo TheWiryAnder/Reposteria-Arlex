@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Verificar Permisos de Administrador</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        h2 { color: #666; margin-top: 30px; }
+        button {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover { background: #f57c00; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .status {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        label { font-weight: bold; display: block; margin-top: 10px; }
+        .test-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Diagnóstico y Reparación de Permisos Admin</h1>
+
+        <div id="loginSection">
+            <h2>Paso 1: Iniciar Sesión</h2>
+            <label for="email">Email del Administrador:</label>
+            <input type="email" id="email" placeholder="administrador@gmail.com">
+
+            <label for="password">Contraseña:</label>
+            <input type="password" id="password" placeholder="Tu contraseña">
+
+            <button onclick="loginUser()">Iniciar Sesión</button>
+        </div>
+
+        <div id="diagnosticSection" style="display: none;">
+            <h2>Paso 2: Diagnóstico Completo</h2>
+            <button onclick="runFullDiagnostic()">🔍 Ejecutar Diagnóstico Completo</button>
+            <button onclick="fixAdminPermissions()">🔧 Reparar Permisos de Admin</button>
+            <button onclick="testAdminFunctions()">✅ Probar Funciones de Admin</button>
+        </div>
+
+        <div id="status"></div>
+        <div id="diagnosticResults"></div>
+        <div id="testResults"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, getDoc, collection, addDoc, updateDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDSbnF0m8c_rJ0vJqDbGWPuZe7a6JuFJ8U",
+            authDomain: "reposteriaarlex.firebaseapp.com",
+            projectId: "reposteriaarlex",
+            storageBucket: "reposteriaarlex.firebasestorage.app",
+            messagingSenderId: "1002334605134",
+            appId: "1:1002334605134:web:23b6113835b89e2e074395",
+            measurementId: "G-KQXNFCZW40"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        window.auth = auth;
+        window.db = db;
+
+        let currentUserData = null;
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('diagnosticSection').style.display = 'block';
+
+                const statusDiv = document.getElementById('status');
+                statusDiv.innerHTML = `
+                    <div class="status info">
+                        <strong>✅ Autenticado como:</strong> ${user.email}<br>
+                        <strong>UID:</strong> ${user.uid}
+                    </div>
+                `;
+            }
+        });
+
+        window.loginUser = async function() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const statusDiv = document.getElementById('status');
+
+            if (!email || !password) {
+                statusDiv.innerHTML = '<div class="status error">❌ Por favor completa todos los campos</div>';
+                return;
+            }
+
+            try {
+                statusDiv.innerHTML = '<div class="status info">🔄 Iniciando sesión...</div>';
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ Error al iniciar sesión:<br>
+                        <strong>${error.code}</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        };
+
+        window.runFullDiagnostic = async function() {
+            const user = auth.currentUser;
+            const resultsDiv = document.getElementById('diagnosticResults');
+
+            if (!user) {
+                resultsDiv.innerHTML = '<div class="status error">❌ No hay usuario autenticado</div>';
+                return;
+            }
+
+            resultsDiv.innerHTML = '<div class="status info">🔄 Ejecutando diagnóstico completo...</div>';
+
+            let diagnosticReport = '<h2>📊 Reporte de Diagnóstico</h2>';
+
+            try {
+                // 1. Verificar documento en Firestore
+                diagnosticReport += '<h3>1️⃣ Verificación de Documento en Firestore</h3>';
+                const userDocRef = doc(db, 'usuarios', user.uid);
+                const userDoc = await getDoc(userDocRef);
+
+                if (userDoc.exists()) {
+                    currentUserData = userDoc.data();
+                    diagnosticReport += `
+                        <div class="status success">
+                            ✅ Documento encontrado<br>
+                            <pre>${JSON.stringify(currentUserData, null, 2)}</pre>
+                        </div>
+                    `;
+
+                    // Verificar campos críticos
+                    diagnosticReport += '<h3>2️⃣ Verificación de Campos Críticos</h3>';
+                    const issues = [];
+
+                    if (currentUserData.rol !== 'admin') {
+                        issues.push(`❌ Rol incorrecto: "${currentUserData.rol}" (debería ser "admin")`);
+                    } else {
+                        diagnosticReport += '<div class="status success">✅ Rol correcto: "admin"</div>';
+                    }
+
+                    if (currentUserData.estado !== 'activo') {
+                        issues.push(`❌ Estado incorrecto: "${currentUserData.estado}" (debería ser "activo")`);
+                    } else {
+                        diagnosticReport += '<div class="status success">✅ Estado correcto: "activo"</div>';
+                    }
+
+                    if (currentUserData.email !== user.email) {
+                        issues.push(`⚠️ Email no coincide: Firestore="${currentUserData.email}", Auth="${user.email}"`);
+                    } else {
+                        diagnosticReport += '<div class="status success">✅ Email coincide</div>';
+                    }
+
+                    if (issues.length > 0) {
+                        diagnosticReport += `<div class="status error">Problemas encontrados:<br>${issues.join('<br>')}</div>`;
+                    }
+
+                } else {
+                    diagnosticReport += `
+                        <div class="status error">
+                            ❌ NO existe documento en Firestore para el UID: ${user.uid}<br>
+                            Este es el problema principal.
+                        </div>
+                    `;
+                }
+
+                // 3. Verificar permisos de lectura en colecciones admin
+                diagnosticReport += '<h3>3️⃣ Prueba de Permisos de Lectura</h3>';
+
+                try {
+                    const promocionesRef = collection(db, 'promociones');
+                    const promoTest = await getDoc(doc(promocionesRef, 'test_probe'));
+                    diagnosticReport += '<div class="status success">✅ Puede leer colección "promociones"</div>';
+                } catch (error) {
+                    diagnosticReport += `<div class="status warning">⚠️ Error al leer "promociones": ${error.message}</div>`;
+                }
+
+                try {
+                    const productosRef = collection(db, 'productos');
+                    const prodTest = await getDoc(doc(productosRef, 'test_probe'));
+                    diagnosticReport += '<div class="status success">✅ Puede leer colección "productos"</div>';
+                } catch (error) {
+                    diagnosticReport += `<div class="status error">❌ Error al leer "productos": ${error.message}</div>`;
+                }
+
+                // 4. Verificar token de autenticación
+                diagnosticReport += '<h3>4️⃣ Token de Autenticación</h3>';
+                const token = await user.getIdToken(true); // Forzar refresh
+                const tokenResult = await user.getIdTokenResult();
+                diagnosticReport += `
+                    <div class="status info">
+                        <strong>Token emitido:</strong> ${new Date(tokenResult.issuedAtTime).toLocaleString()}<br>
+                        <strong>Token expira:</strong> ${new Date(tokenResult.expirationTime).toLocaleString()}<br>
+                        <strong>Custom Claims:</strong> ${JSON.stringify(tokenResult.claims, null, 2)}
+                    </div>
+                `;
+
+                resultsDiv.innerHTML = diagnosticReport;
+
+            } catch (error) {
+                resultsDiv.innerHTML += `
+                    <div class="status error">
+                        ❌ Error durante diagnóstico:<br>
+                        <strong>${error.code}</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        };
+
+        window.fixAdminPermissions = async function() {
+            const user = auth.currentUser;
+            const resultsDiv = document.getElementById('diagnosticResults');
+
+            if (!user) {
+                resultsDiv.innerHTML = '<div class="status error">❌ No hay usuario autenticado</div>';
+                return;
+            }
+
+            resultsDiv.innerHTML = '<div class="status info">🔧 Reparando permisos de administrador...</div>';
+
+            try {
+                const userDocRef = doc(db, 'usuarios', user.uid);
+
+                // Datos correctos de administrador
+                const correctAdminData = {
+                    email: user.email,
+                    nombre: 'Administrador',
+                    rol: 'admin',
+                    estado: 'activo',
+                    telefono: '',
+                    direccion: '',
+                    updatedAt: serverTimestamp()
+                };
+
+                // Verificar si existe
+                const existingDoc = await getDoc(userDocRef);
+                if (!existingDoc.exists()) {
+                    correctAdminData.createdAt = serverTimestamp();
+                }
+
+                // Guardar/actualizar
+                await setDoc(userDocRef, correctAdminData, { merge: true });
+
+                // Forzar refresh del token
+                await user.getIdToken(true);
+
+                // Esperar un momento para que se sincronice
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Verificar que se guardó
+                const verifyDoc = await getDoc(userDocRef);
+                const verifyData = verifyDoc.data();
+
+                resultsDiv.innerHTML = `
+                    <div class="status success">
+                        <h3>✅ Permisos reparados exitosamente</h3>
+                        <strong>Documento actualizado:</strong>
+                        <pre>${JSON.stringify(verifyData, null, 2)}</pre>
+                        <p style="color: #ff9800; font-weight: bold;">
+                            ⚠️ IMPORTANTE: Cierra sesión y vuelve a iniciar sesión en tu aplicación Flutter para aplicar los cambios.
+                        </p>
+                    </div>
+                `;
+
+                currentUserData = verifyData;
+
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ Error al reparar permisos:<br>
+                        <strong>${error.code}</strong><br>
+                        ${error.message}<br><br>
+                        <pre>${error.stack}</pre>
+                    </div>
+                `;
+            }
+        };
+
+        window.testAdminFunctions = async function() {
+            const user = auth.currentUser;
+            const testDiv = document.getElementById('testResults');
+
+            if (!user) {
+                testDiv.innerHTML = '<div class="status error">❌ No hay usuario autenticado</div>';
+                return;
+            }
+
+            testDiv.innerHTML = '<div class="test-section"><h2>🧪 Pruebas de Funciones de Administrador</h2></div>';
+
+            let testReport = '';
+            let testsPassed = 0;
+            let testsFailed = 0;
+
+            // TEST 1: Crear promoción
+            testReport += '<h3>Test 1: Crear Promoción</h3>';
+            try {
+                const testPromo = {
+                    titulo: 'Test Promoción',
+                    descripcion: 'Promoción de prueba para verificar permisos',
+                    descuento: 10,
+                    fechaInicio: serverTimestamp(),
+                    fechaFin: serverTimestamp(),
+                    activa: false,
+                    productosAplicables: [],
+                    fechaCreacion: serverTimestamp()
+                };
+
+                const promoRef = await addDoc(collection(db, 'promociones'), testPromo);
+                testReport += `<div class="status success">✅ PASÓ: Promoción creada con ID: ${promoRef.id}</div>`;
+                testsPassed++;
+
+                // Limpiar: eliminar la promoción de prueba
+                await deleteDoc(promoRef);
+                testReport += `<div class="status info">🧹 Promoción de prueba eliminada</div>`;
+
+            } catch (error) {
+                testReport += `<div class="status error">❌ FALLÓ: ${error.message}</div>`;
+                testsFailed++;
+            }
+
+            // TEST 2: Actualizar producto
+            testReport += '<h3>Test 2: Actualizar Producto</h3>';
+            try {
+                // Obtener un producto existente
+                const productosSnapshot = await getDocs(collection(db, 'productos'));
+                if (!productosSnapshot.empty) {
+                    const firstProduct = productosSnapshot.docs[0];
+                    await updateDoc(doc(db, 'productos', firstProduct.id), {
+                        updatedAt: serverTimestamp()
+                    });
+                    testReport += `<div class="status success">✅ PASÓ: Producto actualizado</div>`;
+                    testsPassed++;
+                } else {
+                    testReport += `<div class="status warning">⚠️ No hay productos para probar</div>`;
+                }
+            } catch (error) {
+                testReport += `<div class="status error">❌ FALLÓ: ${error.message}</div>`;
+                testsFailed++;
+            }
+
+            // TEST 3: Leer todos los pedidos (función admin)
+            testReport += '<h3>Test 3: Leer Pedidos (Admin)</h3>';
+            try {
+                const pedidosSnapshot = await getDocs(collection(db, 'pedidos'));
+                testReport += `<div class="status success">✅ PASÓ: Se leyeron ${pedidosSnapshot.size} pedidos</div>`;
+                testsPassed++;
+            } catch (error) {
+                testReport += `<div class="status error">❌ FALLÓ: ${error.message}</div>`;
+                testsFailed++;
+            }
+
+            // Resumen
+            const totalTests = testsPassed + testsFailed;
+            const successRate = totalTests > 0 ? (testsPassed / totalTests * 100).toFixed(1) : 0;
+
+            testReport += `
+                <div class="test-section">
+                    <h3>📊 Resumen de Pruebas</h3>
+                    <p><strong>Total de pruebas:</strong> ${totalTests}</p>
+                    <p><strong>✅ Pasaron:</strong> ${testsPassed}</p>
+                    <p><strong>❌ Fallaron:</strong> ${testsFailed}</p>
+                    <p><strong>Tasa de éxito:</strong> ${successRate}%</p>
+                    ${testsFailed > 0
+                        ? '<div class="status error">❌ Algunas pruebas fallaron. El usuario NO tiene permisos completos de admin.</div>'
+                        : '<div class="status success">✅ Todas las pruebas pasaron. El usuario tiene permisos completos de admin.</div>'
+                    }
+                </div>
+            `;
+
+            testDiv.innerHTML += testReport;
+        };
+
+        // Importar getDocs que faltaba
+        import { getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        window.getDocs = getDocs;
+    </script>
+</body>
+</html>

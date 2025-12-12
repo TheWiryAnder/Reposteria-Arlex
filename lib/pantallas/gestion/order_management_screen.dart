@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../../servicios/notificaciones_service.dart';
+import '../../servicios/reporte_excel_service.dart';
 
 class OrderManagementScreen extends StatefulWidget {
   const OrderManagementScreen({super.key});
@@ -158,12 +159,88 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                   ],
                 ),
               ),
+              // Botón de descarga de reporte
+              IconButton(
+                icon: const Icon(Icons.file_download, color: Colors.orange),
+                tooltip: 'Descargar reporte Excel',
+                onPressed: () => _descargarReporteUsuario(clienteNombre, pedidos),
+              ),
+              const SizedBox(width: 8),
               const Icon(Icons.arrow_forward_ios, color: Colors.grey),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _descargarReporteUsuario(String clienteNombre, List<DocumentSnapshot> pedidos) async {
+    try {
+      // Mostrar indicador de carga
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Text('Generando reporte de $clienteNombre...'),
+            ],
+          ),
+          duration: const Duration(seconds: 2),
+          backgroundColor: Colors.blue,
+        ),
+      );
+
+      // Generar reporte
+      final reporteService = ReporteExcelService();
+      await reporteService.generarReporteUsuario(clienteNombre, pedidos);
+
+      if (!mounted) return;
+
+      // Mostrar mensaje de éxito
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text('Reporte de $clienteNombre descargado exitosamente'),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error, color: Colors.white),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text('Error al generar reporte: $e'),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
   }
 
   void _verPedidosCliente(String clienteNombre, List<DocumentSnapshot> pedidos) {

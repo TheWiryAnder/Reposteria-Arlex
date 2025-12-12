@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../servicios/boleta_pdf_service.dart';
 
 class DetallePedidoScreen extends StatelessWidget {
   final String pedidoId;
@@ -175,7 +176,7 @@ class DetallePedidoScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      ...items.map((item) => _buildProductoItem(item)),
+                      _buildProductosTabla(items),
                     ],
                   ),
                 ),
@@ -262,6 +263,30 @@ class DetallePedidoScreen extends StatelessWidget {
                   ),
                 ),
 
+                // Botón de descarga de boleta
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _descargarBoleta(context),
+                      icon: const Icon(Icons.download),
+                      label: const Text(
+                        'Descargar Boleta',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
                 // Fecha del pedido
                 if (fechaPedido != null)
                   Padding(
@@ -281,6 +306,80 @@ class DetallePedidoScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _descargarBoleta(BuildContext context) async {
+    try {
+      // Mostrar indicador de carga
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      final numeroPedido = pedido['numeroPedido'] as String? ?? '';
+      final estado = pedido['estado'] as String? ?? 'pendiente';
+      final items = pedido['items'] as List<dynamic>? ?? [];
+      final total = (pedido['total'] as num?)?.toDouble() ?? 0.0;
+      final subtotal = (pedido['subtotal'] as num?)?.toDouble() ?? 0.0;
+      final costoEnvio = (pedido['costoEnvio'] as num?)?.toDouble() ?? 0.0;
+      final metodoEntrega = pedido['metodoEntrega'] as String? ?? '';
+      final metodoPago = pedido['metodoPago'] as String? ?? '';
+      final direccionEntrega = pedido['direccionEntrega'] as String? ?? '';
+      final notasCliente = pedido['notasCliente'] as String? ?? '';
+      final fechaPedido = pedido['fechaPedido'] as Timestamp?;
+
+      final fecha = fechaPedido != null
+          ? _formatearFechaCompleta(fechaPedido.toDate())
+          : 'Fecha no disponible';
+
+      // Convertir items a formato Map<String, dynamic>
+      final itemsList = items.map((item) => item as Map<String, dynamic>).toList();
+
+      await BoletaPdfService.generarYDescargarBoleta(
+        numeroPedido: numeroPedido,
+        fecha: fecha,
+        estado: estado,
+        items: itemsList,
+        subtotal: subtotal,
+        costoEnvio: costoEnvio,
+        total: total,
+        metodoEntrega: metodoEntrega,
+        metodoPago: metodoPago,
+        direccionEntrega: direccionEntrega.isNotEmpty ? direccionEntrega : null,
+        notasCliente: notasCliente.isNotEmpty ? notasCliente : null,
+      );
+
+      // Cerrar el indicador de carga
+      if (context.mounted) {
+        Navigator.of(context).pop();
+
+        // Mostrar mensaje de éxito
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Boleta descargada exitosamente'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      // Cerrar el indicador de carga si está abierto
+      if (context.mounted) {
+        Navigator.of(context).pop();
+
+        // Mostrar mensaje de error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al descargar la boleta: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildTimeline(String estadoActual) {
@@ -337,84 +436,309 @@ class DetallePedidoScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProductoItem(Map<String, dynamic> item) {
+  Widget _buildProductosTabla(List<dynamic> items) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final isMobile = width < 600;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Column(
+            children: [
+              // Encabezado de la tabla
+              if (!isMobile)
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(8),
+                  topRight: Radius.circular(8),
+                ),
+              ),
+              child: const Row(
+                children: [
+                  SizedBox(width: 50, child: Text('Cant.', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                  SizedBox(width: 60),
+                  Expanded(flex: 2, child: Text('Producto', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                  Expanded(flex: 3, child: Text('Descripción', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                  SizedBox(width: 80, child: Text('Descuento', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12), textAlign: TextAlign.center)),
+                  SizedBox(width: 90, child: Text('P. Unitario', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12), textAlign: TextAlign.right)),
+                  SizedBox(width: 90, child: Text('Total', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12), textAlign: TextAlign.right)),
+                ],
+              ),
+            ),
+
+              // Items del pedido
+              ...items.asMap().entries.map((entry) {
+                final index = entry.key;
+                final item = entry.value;
+                final isLast = index == items.length - 1;
+
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    border: !isLast ? Border(bottom: BorderSide(color: Colors.grey.shade200)) : null,
+                  ),
+                  child: isMobile
+                      ? _buildMobileItemRow(item)
+                      : _buildDesktopItemRow(item),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDesktopItemRow(Map<String, dynamic> item) {
     final nombre = item['productoNombre'] as String? ?? '';
     final cantidad = item['cantidad'] as int? ?? 0;
     final precio = (item['precioUnitario'] as num?)?.toDouble() ?? 0.0;
     final subtotal = (item['subtotal'] as num?)?.toDouble() ?? 0.0;
     final imagenUrl = item['productoImagen'] as String? ?? item['imagenUrl'] as String? ?? '';
+    final descripcion = item['productoDescripcion'] as String? ?? item['descripcion'] as String? ?? '';
+    final descuento = (item['descuento'] as num?)?.toDouble() ?? 0.0;
+    final tieneDescuento = descuento > 0;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Imagen del producto
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey[300]!, width: 1),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: imagenUrl.isNotEmpty
-                  ? Image.network(
-                      imagenUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(Icons.cake, color: Colors.grey, size: 30);
-                      },
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Center(
-                          child: CircularProgressIndicator(
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                : null,
-                            strokeWidth: 2,
-                          ),
-                        );
-                      },
-                    )
-                  : const Icon(Icons.cake, color: Colors.grey, size: 30),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Cantidad
+        SizedBox(
+          width: 50,
+          child: Text(
+            '${cantidad}x',
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
+        ),
+
+        // Imagen del producto
+        SizedBox(
+          width: 60,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: imagenUrl.isNotEmpty
+                ? Image.network(
+                    imagenUrl,
+                    width: 50,
+                    height: 50,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: 50,
+                        height: 50,
+                        color: Colors.grey.shade300,
+                        child: const Icon(Icons.cake, size: 24),
+                      );
+                    },
+                  )
+                : Container(
+                    width: 50,
+                    height: 50,
+                    color: Colors.grey.shade300,
+                    child: const Icon(Icons.cake, size: 24),
+                  ),
+          ),
+        ),
+
+        // Nombre del producto
+        Expanded(
+          flex: 2,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              nombre,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+        ),
+
+        // Descripción
+        Expanded(
+          flex: 3,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              descripcion,
+              style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+
+        // Descuento
+        SizedBox(
+          width: 80,
+          child: tieneDescuento
+              ? Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Text(
+                    '-${descuento.toInt()}%',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red.shade700,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                )
+              : const Text(
+                  '-',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+        ),
+
+        // Precio unitario
+        SizedBox(
+          width: 90,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (tieneDescuento)
                 Text(
-                  nombre,
+                  'S/. ${(precio / (1 - descuento / 100)).toStringAsFixed(2)}',
                   style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 10,
+                    decoration: TextDecoration.lineThrough,
+                    color: Colors.grey,
                   ),
                 ),
+              Text(
+                'S/. ${precio.toStringAsFixed(2)}',
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                textAlign: TextAlign.right,
+              ),
+            ],
+          ),
+        ),
+
+        // Total
+        SizedBox(
+          width: 90,
+          child: Text(
+            'S/. ${subtotal.toStringAsFixed(2)}',
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.right,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileItemRow(Map<String, dynamic> item) {
+    final nombre = item['productoNombre'] as String? ?? '';
+    final cantidad = item['cantidad'] as int? ?? 0;
+    final precio = (item['precioUnitario'] as num?)?.toDouble() ?? 0.0;
+    final subtotal = (item['subtotal'] as num?)?.toDouble() ?? 0.0;
+    final imagenUrl = item['productoImagen'] as String? ?? item['imagenUrl'] as String? ?? '';
+    final descripcion = item['productoDescripcion'] as String? ?? item['descripcion'] as String? ?? '';
+    final descuento = (item['descuento'] as num?)?.toDouble() ?? 0.0;
+    final tieneDescuento = descuento > 0;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Imagen
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: imagenUrl.isNotEmpty
+              ? Image.network(
+                  imagenUrl,
+                  width: 60,
+                  height: 60,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: 60,
+                      height: 60,
+                      color: Colors.grey.shade300,
+                      child: const Icon(Icons.cake, size: 30),
+                    );
+                  },
+                )
+              : Container(
+                  width: 60,
+                  height: 60,
+                  color: Colors.grey.shade300,
+                  child: const Icon(Icons.cake, size: 30),
+                ),
+        ),
+        const SizedBox(width: 12),
+
+        // Info del producto
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                nombre,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (descripcion.isNotEmpty) ...[
                 const SizedBox(height: 4),
                 Text(
-                  '$cantidad x S/. ${precio.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  descripcion,
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
-            ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Text(
+                    '$cantidad x S/. ${precio.toStringAsFixed(2)}',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  if (tieneDescuento) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: Text(
+                        '-${descuento.toInt()}%',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red.shade700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
           ),
-          Text(
-            'S/. ${subtotal.toStringAsFixed(2)}',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
+        ),
+
+        // Total
+        Text(
+          'S/. ${subtotal.toStringAsFixed(2)}',
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        ),
+      ],
     );
   }
 

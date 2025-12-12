@@ -34,6 +34,7 @@ class UsuarioModelo {
   String get rolDescripcion {
     switch (rol) {
       case 'admin':
+      case 'administrador':
         return 'Administrador';
       case 'empleado':
         return 'Empleado';
@@ -43,6 +44,11 @@ class UsuarioModelo {
         return 'Usuario';
     }
   }
+
+  // Normalizar el rol (convertir 'administrador' a 'admin')
+  bool get esAdmin => rol == 'admin' || rol == 'administrador';
+  bool get esEmpleado => rol == 'empleado';
+  bool get esCliente => rol == 'cliente';
 
   String get estadoDescripcion {
     switch (estado) {
@@ -91,17 +97,23 @@ class AuthProvider extends ChangeNotifier {
         final userData = await firebaseAuth.obtenerDatosUsuario(firebaseUser.uid);
 
         if (userData != null) {
+          // Normalizar el rol (convertir 'administrador' a 'admin')
+          String rol = userData['rol'] ?? 'cliente';
+          if (rol == 'administrador') {
+            rol = 'admin';
+          }
+
           _currentUser = UsuarioModelo(
             id: firebaseUser.uid,  // Usar directamente el UID de Firebase Auth
             email: userData['email'] ?? firebaseUser.email ?? '',
             nombre: userData['nombre'] ?? 'Usuario',
             telefono: userData['telefono'],
             direccion: userData['direccion'],
-            rol: userData['rol'] ?? 'cliente',
+            rol: rol,
             estado: userData['estado'] ?? 'activo',
           );
           _authState = AuthState.authenticated;
-          print('AUTH INIT - Usuario restaurado: ${_currentUser!.nombre}');
+          print('AUTH INIT - Usuario restaurado: ${_currentUser!.nombre} (Rol: $rol)');
         } else {
           _authState = AuthState.unauthenticated;
           print('AUTH INIT - No se encontraron datos del usuario en Firestore');
@@ -137,17 +149,24 @@ class AuthProvider extends ChangeNotifier {
         final userData = result['userData'] as Map<String, dynamic>?;
 
         if (userData != null) {
+          // Normalizar el rol (convertir 'administrador' a 'admin')
+          String rol = userData['rol'] ?? 'cliente';
+          if (rol == 'administrador') {
+            rol = 'admin';
+          }
+
           _currentUser = UsuarioModelo(
             id: userData['id'] ?? result['userId'],
             email: userData['email'] ?? email,
             nombre: userData['nombre'] ?? 'Usuario',
             telefono: userData['telefono'],
             direccion: userData['direccion'],
-            rol: userData['rol'] ?? 'cliente',
+            rol: rol,
             estado: userData['estado'] ?? 'activo',
           );
           _authState = AuthState.authenticated;
           _errorMessage = null;
+          print('LOGIN - Usuario autenticado: ${_currentUser!.nombre} (Rol: $rol)');
           notifyListeners();
           return true;
         } else {
@@ -275,6 +294,53 @@ class AuthProvider extends ChangeNotifier {
     _authState = AuthState.unauthenticated;
     _errorMessage = null;
     notifyListeners();
+  }
+
+  /// Recargar datos del usuario actual desde Firestore
+  /// Útil después de actualizar permisos o roles
+  Future<void> reloadUserData() async {
+    try {
+      final firebaseUser = FirebaseAuth.instance.currentUser;
+
+      if (firebaseUser == null) {
+        print('RELOAD USER DATA - No hay usuario autenticado');
+        return;
+      }
+
+      print('RELOAD USER DATA - Recargando datos para: ${firebaseUser.uid}');
+
+      // Forzar refresh del token de autenticación
+      await firebaseUser.getIdToken(true);
+
+      final firebaseAuth = FirebaseAuthService();
+      final userData = await firebaseAuth.obtenerDatosUsuario(firebaseUser.uid);
+
+      if (userData != null) {
+        // Normalizar el rol (convertir 'administrador' a 'admin')
+        String rol = userData['rol'] ?? 'cliente';
+        if (rol == 'administrador') {
+          rol = 'admin';
+        }
+
+        _currentUser = UsuarioModelo(
+          id: firebaseUser.uid,
+          email: userData['email'] ?? firebaseUser.email ?? '',
+          nombre: userData['nombre'] ?? 'Usuario',
+          telefono: userData['telefono'],
+          direccion: userData['direccion'],
+          rol: rol,
+          estado: userData['estado'] ?? 'activo',
+        );
+        _authState = AuthState.authenticated;
+        notifyListeners();
+
+        print('RELOAD USER DATA - Datos actualizados. Rol: $rol');
+      } else {
+        print('RELOAD USER DATA - No se encontraron datos en Firestore');
+      }
+    } catch (e) {
+      print('RELOAD USER DATA ERROR: $e');
+    }
   }
 
   bool hasPermission(String permission) {

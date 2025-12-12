@@ -7,6 +7,7 @@ import 'dart:typed_data';
 import '../../providers/carrito_provider.dart';
 import '../../providers/auth_provider_simple.dart' as app_auth;
 import '../../servicios/pedidos_service.dart';
+import '../../servicios/boleta_pdf_service.dart';
 import '../../compartidos/widgets/message_helpers.dart';
 import '../../utils/debug_auth.dart';
 import '../../modelos/carrito_modelo.dart';
@@ -1254,11 +1255,34 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ? carritoProvider.total + _costoEnvio
             : carritoProvider.total;
 
+        // Guardar información del pedido antes de limpiar el carrito
+        final numeroPedido = resultado['numeroPedido'] ?? '';
+        final pedidoItems = carritoProvider.items.map((item) {
+          return {
+            'productoNombre': item.producto.nombre,
+            'cantidad': item.cantidad,
+            'precioUnitario': item.precioUnitario,
+            'subtotal': item.subtotal,
+            'productoDescripcion': item.producto.descripcion,
+            'descuento': item.tieneDescuento ? item.porcentajeDescuento : 0.0,
+            'productoImagen': item.producto.imagenUrl ?? '',
+          };
+        }).toList();
+
         // Limpiar carrito
         carritoProvider.limpiarCarrito();
 
         // Verificar que el widget aún esté montado antes de mostrar el diálogo
         if (!mounted) return;
+
+        // Generar y descargar boleta automáticamente
+        _generarBoletaAutomatica(
+          numeroPedido: numeroPedido,
+          items: pedidoItems,
+          subtotal: totalPedido - (_metodoEntrega == 'domicilio' ? _costoEnvio : 0.0),
+          costoEnvio: _metodoEntrega == 'domicilio' ? _costoEnvio : 0.0,
+          total: totalPedido,
+        );
 
         // Mostrar confirmación
         showDialog(
@@ -1294,7 +1318,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        resultado['numeroPedido'] ?? '',
+                        numeroPedido,
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -1312,9 +1336,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     color: Theme.of(context).primaryColor,
                   ),
                 ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Tu boleta se ha descargado automáticamente',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
               ],
             ),
             actions: [
+              TextButton.icon(
+                onPressed: () {
+                  // Descargar boleta nuevamente
+                  _generarBoletaAutomatica(
+                    numeroPedido: numeroPedido,
+                    items: pedidoItems,
+                    subtotal: totalPedido - (_metodoEntrega == 'domicilio' ? _costoEnvio : 0.0),
+                    costoEnvio: _metodoEntrega == 'domicilio' ? _costoEnvio : 0.0,
+                    total: totalPedido,
+                  );
+                },
+                icon: const Icon(Icons.download),
+                label: const Text('Descargar Boleta'),
+              ),
               TextButton(
                 onPressed: () {
                   // Cerrar diálogo
@@ -1354,6 +1398,37 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           _isProcessing = false;
         });
       }
+    }
+  }
+
+  Future<void> _generarBoletaAutomatica({
+    required String numeroPedido,
+    required List<Map<String, dynamic>> items,
+    required double subtotal,
+    required double costoEnvio,
+    required double total,
+  }) async {
+    try {
+      final fecha = DateTime.now();
+      final fechaFormateada = '${fecha.day}/${fecha.month}/${fecha.year} ${fecha.hour}:${fecha.minute.toString().padLeft(2, '0')}';
+
+      await BoletaPdfService.generarYDescargarBoleta(
+        numeroPedido: numeroPedido,
+        fecha: fechaFormateada,
+        estado: 'pendiente',
+        items: items,
+        subtotal: subtotal,
+        costoEnvio: costoEnvio,
+        total: total,
+        metodoEntrega: _metodoEntrega,
+        metodoPago: _metodoPago,
+        direccionEntrega: _metodoEntrega == 'domicilio' ? _direccionController.text : null,
+        notasCliente: _notasController.text.isNotEmpty ? _notasController.text : null,
+      );
+    } catch (e) {
+      print('Error al generar boleta: $e');
+      // No mostramos error al usuario para no interrumpir el flujo
+      // La boleta se puede descargar después desde el detalle del pedido
     }
   }
 }

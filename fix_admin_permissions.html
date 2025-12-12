@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fix Admin Permissions</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <h1>Asignar Permisos de Administrador</h1>
+    <div id="status">Cargando...</div>
+    <button id="fixBtn" style="display:none; padding: 10px 20px; font-size: 16px; cursor: pointer;">
+        Asignar Rol de Administrador
+    </button>
+    <div id="result"></div>
+
+    <script>
+        // Configuración de Firebase (copia de tu proyecto)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDSbnF0m8c_rJ0vJqDbGWPuZe7a6JuFJ8U",
+            authDomain: "reposteriaarlex.firebaseapp.com",
+            projectId: "reposteriaarlex",
+            storageBucket: "reposteriaarlex.firebasestorage.app",
+            messagingSenderId: "1002334605134",
+            appId: "1:1002334605134:web:23b6113835b89e2e074395",
+            measurementId: "G-KQXNFCZW40"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Verificar estado de autenticación
+        auth.onAuthStateChanged(async (user) => {
+            const statusDiv = document.getElementById('status');
+            const fixBtn = document.getElementById('fixBtn');
+            const resultDiv = document.getElementById('result');
+
+            if (user) {
+                statusDiv.innerHTML = `
+                    <p>✅ Usuario autenticado: <strong>${user.email}</strong></p>
+                    <p>UID: ${user.uid}</p>
+                `;
+
+                // Verificar el rol actual
+                try {
+                    const userDoc = await db.collection('usuarios').doc(user.uid).get();
+                    if (userDoc.exists) {
+                        const userData = userDoc.data();
+                        statusDiv.innerHTML += `
+                            <p>Rol actual: <strong>${userData.rol || 'No definido'}</strong></p>
+                            <p>Estado: <strong>${userData.estado || 'No definido'}</strong></p>
+                        `;
+
+                        if (userData.rol !== 'admin') {
+                            fixBtn.style.display = 'block';
+                            statusDiv.innerHTML += `<p style="color: orange;">⚠️ El usuario no tiene rol de administrador</p>`;
+                        } else {
+                            statusDiv.innerHTML += `<p style="color: green;">✅ El usuario ya tiene rol de administrador</p>`;
+                        }
+                    } else {
+                        statusDiv.innerHTML += `<p style="color: red;">❌ No se encontró el documento del usuario en Firestore</p>`;
+                    }
+                } catch (error) {
+                    statusDiv.innerHTML += `<p style="color: red;">Error al verificar usuario: ${error.message}</p>`;
+                }
+            } else {
+                statusDiv.innerHTML = `
+                    <p style="color: red;">❌ No hay usuario autenticado</p>
+                    <p>Por favor, inicia sesión en tu aplicación primero.</p>
+                `;
+            }
+        });
+
+        // Botón para asignar rol de admin
+        document.getElementById('fixBtn').addEventListener('click', async () => {
+            const user = auth.currentUser;
+            const resultDiv = document.getElementById('result');
+
+            if (!user) {
+                resultDiv.innerHTML = '<p style="color: red;">❌ No hay usuario autenticado</p>';
+                return;
+            }
+
+            try {
+                resultDiv.innerHTML = '<p>🔄 Actualizando permisos...</p>';
+
+                // Actualizar el rol a admin
+                await db.collection('usuarios').doc(user.uid).update({
+                    rol: 'admin',
+                    estado: 'activo',
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                resultDiv.innerHTML = `
+                    <p style="color: green; font-size: 18px; font-weight: bold;">
+                        ✅ ¡Permisos actualizados exitosamente!
+                    </p>
+                    <p>El usuario ahora tiene rol de <strong>administrador</strong></p>
+                    <p style="color: orange;">⚠️ Recarga la aplicación para aplicar los cambios</p>
+                `;
+
+                document.getElementById('fixBtn').style.display = 'none';
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p style="color: red;">❌ Error al actualizar permisos:</p>
+                    <pre>${error.message}</pre>
+                    <p style="color: orange;">Es posible que necesites actualizar las reglas de Firestore temporalmente.</p>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

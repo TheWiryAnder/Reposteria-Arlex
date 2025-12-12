@@ -25,9 +25,11 @@ service cloud.firestore {
       allow create: if true; // Permitir creación para registro
 
       // Permitir actualización si:
-      // 1. Usuario autenticado es dueño o admin, O
-      // 2. Es actualización de campos de recuperación de contraseña (sin autenticación)
-      allow update: if isSignedIn() && (isOwner(userId) || isAdmin()) ||
+      // 1. Usuario autenticado es dueño (para crear su propio documento de admin)
+      // 2. Usuario es admin
+      // 3. Es actualización de campos de recuperación de contraseña (sin autenticación)
+      allow update: if isSignedIn() && isOwner(userId) ||
+                       isSignedIn() && isAdmin() ||
                        (!isSignedIn() &&
                         // Verificar que solo se modifican campos permitidos para recuperación
                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['codigoValidacion', 'nuevaPasswordTemporal', 'updatedAt']) &&

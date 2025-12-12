@@ -39,7 +39,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 
   // GlobalKey estático para acceder al estado desde fuera
-  static final GlobalKey<_HomeScreenState> homeScreenKey = GlobalKey<_HomeScreenState>();
+  static final GlobalKey<_HomeScreenState> homeScreenKey =
+      GlobalKey<_HomeScreenState>();
 }
 
 // Variable estática para controlar si el modal ya se mostró en esta sesión
@@ -111,7 +112,8 @@ class _HomeScreenState extends State<HomeScreen> {
             showDialog(
               context: context,
               barrierDismissible: true,
-              builder: (context) => PromocionesModal(promociones: promocionesVigentes),
+              builder: (context) =>
+                  PromocionesModal(promociones: promocionesVigentes),
             );
           }
         }
@@ -138,7 +140,14 @@ class _HomeScreenState extends State<HomeScreen> {
         final fechaFin = (data['fechaFin'] as Timestamp?)?.toDate();
 
         if (fechaFin != null) {
-          final finSinHora = DateTime(fechaFin.year, fechaFin.month, fechaFin.day, 23, 59, 59);
+          final finSinHora = DateTime(
+            fechaFin.year,
+            fechaFin.month,
+            fechaFin.day,
+            23,
+            59,
+            59,
+          );
 
           // Si la fecha actual es posterior a la fecha fin, desactivar
           if (ahoraSinHora.isAfter(finSinHora)) {
@@ -146,11 +155,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 .collection('promociones')
                 .doc(doc.id)
                 .update({
-              'activa': false,
-              'fechaActualizacion': FieldValue.serverTimestamp(),
-            });
+                  'activa': false,
+                  'fechaActualizacion': FieldValue.serverTimestamp(),
+                });
 
-            print('✅ Promoción "${data['titulo']}" desactivada automáticamente');
+            print(
+              '✅ Promoción "${data['titulo']}" desactivada automáticamente',
+            );
           }
         }
       }
@@ -175,7 +186,8 @@ class _HomeScreenState extends State<HomeScreen> {
         final userRole = currentUser?.rol ?? 'cliente';
 
         // Para clientes y usuarios sin sesión, mostrar la estructura del modelo HTML
-        if (userRole == 'cliente' || authProvider.authState != AuthState.authenticated) {
+        if (userRole == 'cliente' ||
+            authProvider.authState != AuthState.authenticated) {
           return _buildClientHomeScreen();
         }
 
@@ -286,22 +298,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Columna izquierda: Información de contacto
-                    Expanded(
-                      flex: 2,
-                      child: _buildContactInfo(info),
-                    ),
+                    Expanded(flex: 2, child: _buildContactInfo(info)),
                     const SizedBox(width: 32),
                     // Columna central: Copyright/Mensaje
-                    Expanded(
-                      flex: 2,
-                      child: _buildCopyright(),
-                    ),
+                    Expanded(flex: 2, child: _buildCopyright()),
                     const SizedBox(width: 32),
                     // Columna derecha: Redes sociales
-                    Expanded(
-                      flex: 1,
-                      child: _buildSocialMedia(info),
-                    ),
+                    Expanded(flex: 1, child: _buildSocialMedia(info)),
                   ],
                 );
               },
@@ -332,8 +335,10 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 8),
         _buildContactInfoRow(Icons.email, info.email),
         const SizedBox(height: 8),
-        _buildContactInfoRow(Icons.access_time,
-          '${info.galeria.horarioAtencion.lunesViernes}\n${info.galeria.horarioAtencion.sabado}\n${info.galeria.horarioAtencion.domingo}'),
+        _buildContactInfoRow(
+          Icons.access_time,
+          '${info.galeria.horarioAtencion.lunesViernes}\n${info.galeria.horarioAtencion.sabado}\n${info.galeria.horarioAtencion.domingo}',
+        ),
       ],
     );
   }
@@ -354,19 +359,12 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 16),
         const Text(
           'Hecho con ❤️ por el equipo de Repostería Arlex',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            height: 1.5,
-          ),
+          style: TextStyle(color: Colors.white, fontSize: 14, height: 1.5),
         ),
         const SizedBox(height: 12),
         Text(
           '© ${DateTime.now().year} Repostería Arlex. Todos los derechos reservados.',
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 12,
-          ),
+          style: const TextStyle(color: Colors.white70, fontSize: 12),
         ),
         const SizedBox(height: 8),
         const Text(
@@ -411,8 +409,8 @@ class _HomeScreenState extends State<HomeScreen> {
           Icons.chat_bubble,
           'WhatsApp',
           info.whatsapp.isNotEmpty
-            ? 'https://wa.me/${info.whatsapp.replaceAll(RegExp(r'[^\d+]'), '')}'
-            : '',
+              ? 'https://wa.me/${info.whatsapp.replaceAll(RegExp(r'[^\d+]'), '')}'
+              : '',
         ),
       ],
     );
@@ -473,10 +471,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final Uri uri = Uri.parse(url);
       if (await canLaunchUrl(uri)) {
-        await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-        );
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
         if (mounted) {
           showAppMessage(
@@ -634,10 +629,7 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: Colors.grey.shade50,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.grey.shade300,
-          width: 1.5,
-        ),
+        border: Border.all(color: Colors.grey.shade300, width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -663,12 +655,18 @@ class _HomeScreenState extends State<HomeScreen> {
         // Pedidos de hoy
         FirebaseFirestore.instance
             .collection('pedidos')
-            .where('fechaPedido', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+            .where(
+              'fechaPedido',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+            )
             .get(),
         // Todos los pedidos activos (pendiente, confirmado, en preparación)
         FirebaseFirestore.instance
             .collection('pedidos')
-            .where('estado', whereIn: ['pendiente', 'confirmado', 'en preparacion'])
+            .where(
+              'estado',
+              whereIn: ['pendiente', 'confirmado', 'en preparacion'],
+            )
             .get(),
         // Usuarios
         FirebaseFirestore.instance.collection('usuarios').get(),
@@ -677,7 +675,10 @@ class _HomeScreenState extends State<HomeScreen> {
         // Pedidos del mes
         FirebaseFirestore.instance
             .collection('pedidos')
-            .where('fechaPedido', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
+            .where(
+              'fechaPedido',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth),
+            )
             .get(),
       ]),
       builder: (context, snapshot) {
@@ -871,10 +872,7 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.grey.shade300,
-          width: 1.5,
-        ),
+        border: Border.all(color: Colors.grey.shade300, width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -912,10 +910,7 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.grey.shade300,
-          width: 2,
-        ),
+        border: Border.all(color: Colors.grey.shade300, width: 2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -932,7 +927,10 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Text(
                 _getSectionTitleForRole(userRole),
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               TextButton(
                 onPressed: () => _navigateToRelevantSection(userRole),
@@ -946,10 +944,7 @@ class _HomeScreenState extends State<HomeScreen> {
             decoration: BoxDecoration(
               color: Colors.grey.shade50,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.grey.shade200,
-                width: 1,
-              ),
+              border: Border.all(color: Colors.grey.shade200, width: 1),
             ),
             child: Column(children: _getRecentItemsForRole(userRole)),
           ),
@@ -964,10 +959,7 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.grey.shade300,
-          width: 2,
-        ),
+        border: Border.all(color: Colors.grey.shade300, width: 2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -1011,12 +1003,16 @@ class _HomeScreenState extends State<HomeScreen> {
               if (snapshot.hasError) {
                 if (snapshot.error.toString().contains('PERMISSION_DENIED') ||
                     snapshot.error.toString().contains('UNAVAILABLE')) {
-                  debugPrint('Error temporal en Firestore (actividades): ${snapshot.error}');
+                  debugPrint(
+                    'Error temporal en Firestore (actividades): ${snapshot.error}',
+                  );
                 }
               }
 
               // Tratar errores (como colección no existente) como sin actividades
-              if (snapshot.hasError || !snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              if (snapshot.hasError ||
+                  !snapshot.hasData ||
+                  snapshot.data!.docs.isEmpty) {
                 return Container(
                   padding: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
@@ -1026,7 +1022,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Center(
                     child: Column(
                       children: [
-                        Icon(Icons.history, size: 48, color: Colors.grey.shade400),
+                        Icon(
+                          Icons.history,
+                          size: 48,
+                          color: Colors.grey.shade400,
+                        ),
                         const SizedBox(height: 12),
                         Text(
                           'No hay actividades aún',
@@ -1057,24 +1057,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: BoxDecoration(
                   color: Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.grey.shade200,
-                    width: 1,
-                  ),
+                  border: Border.all(color: Colors.grey.shade200, width: 1),
                 ),
                 child: Column(
-                  children: List.generate(
-                    actividades.length * 2 - 1,
-                    (index) {
-                      if (index.isOdd) {
-                        return const Divider(height: 1);
-                      }
-                      final actividadIndex = index ~/ 2;
-                      final actividad = actividades[actividadIndex].data()
-                          as Map<String, dynamic>;
-                      return _buildActividadItem(actividad);
-                    },
-                  ),
+                  children: List.generate(actividades.length * 2 - 1, (index) {
+                    if (index.isOdd) {
+                      return const Divider(height: 1);
+                    }
+                    final actividadIndex = index ~/ 2;
+                    final actividad =
+                        actividades[actividadIndex].data()
+                            as Map<String, dynamic>;
+                    return _buildActividadItem(actividad);
+                  }),
                 ),
               );
             },
@@ -1212,9 +1207,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 'admin':
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => const ActividadesScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const ActividadesScreen()),
         );
         break;
       case 'empleado':
@@ -1398,17 +1391,13 @@ class _HomeScreenState extends State<HomeScreen> {
     } else if (module == 'reports') {
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => const ReportsAnalyticsScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const ReportsAnalyticsScreen()),
       );
     } else if (module == 'banner') {
       // Navegar al módulo de editar banner principal
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => const EditarBannerScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const EditarBannerScreen()),
       );
     } else if (module == 'settings') {
       // Navegar al módulo de configuración completa del negocio
@@ -1657,7 +1646,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               end: Alignment.bottomRight,
                               colors: [
                                 Theme.of(context).primaryColor,
-                                Theme.of(context).primaryColor.withValues(alpha: 0.7),
+                                Theme.of(
+                                  context,
+                                ).primaryColor.withValues(alpha: 0.7),
                               ],
                             ),
                           ),
@@ -1681,7 +1672,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           end: Alignment.bottomRight,
                           colors: [
                             Theme.of(context).primaryColor,
-                            Theme.of(context).primaryColor.withValues(alpha: 0.7),
+                            Theme.of(
+                              context,
+                            ).primaryColor.withValues(alpha: 0.7),
                           ],
                         ),
                       ),
@@ -1757,7 +1750,9 @@ class _HomeScreenState extends State<HomeScreen> {
           // Silenciar errores temporales de Firestore
           if (snapshot.error.toString().contains('PERMISSION_DENIED') ||
               snapshot.error.toString().contains('UNAVAILABLE')) {
-            debugPrint('Error temporal en Firestore (promociones): ${snapshot.error}');
+            debugPrint(
+              'Error temporal en Firestore (promociones): ${snapshot.error}',
+            );
           }
           return const SizedBox.shrink();
         }
@@ -1792,14 +1787,35 @@ class _HomeScreenState extends State<HomeScreen> {
           }
 
           // Obtener la fecha sin hora para comparación
-          final inicioSinHora = DateTime(fechaInicio.year, fechaInicio.month, fechaInicio.day);
-          final finSinHora = DateTime(fechaFin.year, fechaFin.month, fechaFin.day, 23, 59, 59);
-          final ahoraSinHora = DateTime(now.year, now.month, now.day, now.hour, now.minute);
+          final inicioSinHora = DateTime(
+            fechaInicio.year,
+            fechaInicio.month,
+            fechaInicio.day,
+          );
+          final finSinHora = DateTime(
+            fechaFin.year,
+            fechaFin.month,
+            fechaFin.day,
+            23,
+            59,
+            59,
+          );
+          final ahoraSinHora = DateTime(
+            now.year,
+            now.month,
+            now.day,
+            now.hour,
+            now.minute,
+          );
 
           // La promoción es vigente si hoy está entre inicio y fin (inclusivo)
-          final esVigente = !ahoraSinHora.isBefore(inicioSinHora) && !ahoraSinHora.isAfter(finSinHora);
+          final esVigente =
+              !ahoraSinHora.isBefore(inicioSinHora) &&
+              !ahoraSinHora.isAfter(finSinHora);
 
-          print('DEBUG: - Comparación: $inicioSinHora <= $ahoraSinHora <= $finSinHora');
+          print(
+            'DEBUG: - Comparación: $inicioSinHora <= $ahoraSinHora <= $finSinHora',
+          );
           print('DEBUG: ${esVigente ? "✅" : "❌"} Es vigente: $esVigente');
 
           // Verificar que sea una promoción activa
@@ -1812,7 +1828,8 @@ class _HomeScreenState extends State<HomeScreen> {
           // Las promociones pueden tener productos o ser manuales (sin productos)
           // Ambas son válidas, así que no filtramos por productosAplicables
           final productosAplicables = data['productosAplicables'] as List?;
-          final tieneProductos = productosAplicables != null && productosAplicables.isNotEmpty;
+          final tieneProductos =
+              productosAplicables != null && productosAplicables.isNotEmpty;
 
           // Verificar que promociones manuales tengan los datos necesarios
           if (!tieneProductos) {
@@ -1823,7 +1840,9 @@ class _HomeScreenState extends State<HomeScreen> {
             }
             print('DEBUG: ✅ Promoción manual válida: $titulo');
           } else {
-            print('DEBUG: ✅ Promoción con productos: ${productosAplicables.length} productos');
+            print(
+              'DEBUG: ✅ Promoción con productos: ${productosAplicables.length} productos',
+            );
           }
 
           return esVigente;
@@ -1853,7 +1872,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   child: Column(
                     children: [
-                      Icon(Icons.local_offer_outlined, size: 64, color: Colors.grey.shade400),
+                      Icon(
+                        Icons.local_offer_outlined,
+                        size: 64,
+                        color: Colors.grey.shade400,
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         'No hay promociones disponibles',
@@ -1885,7 +1908,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildPromocionesGrid(List<QueryDocumentSnapshot> promocionesVigentes) {
+  Widget _buildPromocionesGrid(
+    List<QueryDocumentSnapshot> promocionesVigentes,
+  ) {
     // Separar promociones en dos tipos:
     // 1. Promociones basadas en productos (tienen productosAplicables)
     // 2. Promociones manuales (no tienen productosAplicables, tienen sus propios datos)
@@ -1921,7 +1946,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return FutureBuilder<List<dynamic>>(
-      future: _obtenerTodasLasPromociones(promocionesDeProductos, promocionesDirectas),
+      future: _obtenerTodasLasPromociones(
+        promocionesDeProductos,
+        promocionesDirectas,
+      ),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
@@ -1953,9 +1981,9 @@ class _HomeScreenState extends State<HomeScreen> {
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: isMobile ? 2 : 4,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: isMobile ? 0.7 : 0.65,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: isMobile ? 0.55 : 0.75,
           ),
           itemCount: items.length,
           itemBuilder: (context, index) {
@@ -1981,7 +2009,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Agregar productos con descuento
     if (promocionesDeProductos.isNotEmpty) {
-      final productos = await _obtenerProductosConDescuentos(promocionesDeProductos);
+      final productos = await _obtenerProductosConDescuentos(
+        promocionesDeProductos,
+      );
       items.addAll(productos);
     }
 
@@ -1991,7 +2021,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return items;
   }
 
-  Future<List<ProductoModelo>> _obtenerProductosConDescuentos(List<Map<String, dynamic>> productosData) async {
+  Future<List<ProductoModelo>> _obtenerProductosConDescuentos(
+    List<Map<String, dynamic>> productosData,
+  ) async {
     if (productosData.isEmpty) return [];
 
     try {
@@ -2073,7 +2105,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 )
               // Mostrar error o vacío
-              else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.docs.isEmpty)
+              else if (snapshot.hasError ||
+                  !snapshot.hasData ||
+                  snapshot.data!.docs.isEmpty)
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(32),
@@ -2084,7 +2118,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   child: Column(
                     children: [
-                      Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.grey.shade400),
+                      Icon(
+                        Icons.shopping_bag_outlined,
+                        size: 64,
+                        color: Colors.grey.shade400,
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         'No hay productos para recomendar',
@@ -2110,22 +2148,20 @@ class _HomeScreenState extends State<HomeScreen> {
               else
                 Builder(
                   builder: (context) {
-                    final productos = snapshot.data!.docs
-                        .map((doc) {
-                          final data = doc.data() as Map<String, dynamic>;
-                          data['id'] = doc.id;
-                          return ProductoModelo.fromJson(data);
-                        })
-                        .toList();
+                    final productos = snapshot.data!.docs.map((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      data['id'] = doc.id;
+                      return ProductoModelo.fromJson(data);
+                    }).toList();
 
                     return GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: isMobile ? 200 : 300,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        mainAxisExtent: isMobile ? 375 : 425,
+                        maxCrossAxisExtent: isMobile ? 180 : 300,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        mainAxisExtent: isMobile ? 420 : 405,
                       ),
                       itemCount: productos.length,
                       itemBuilder: (context, index) {
@@ -2198,27 +2234,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            producto.categoria,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                     IconButton(
                       icon: const Icon(Icons.close, color: Colors.white),
                       onPressed: () => Navigator.of(context).pop(),
@@ -2237,7 +2254,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           // Imagen del producto
-                          if (producto.imagenUrl != null && producto.imagenUrl!.isNotEmpty)
+                          if (producto.imagenUrl != null &&
+                              producto.imagenUrl!.isNotEmpty)
                             Center(
                               child: ConstrainedBox(
                                 constraints: BoxConstraints(
@@ -2256,30 +2274,49 @@ class _HomeScreenState extends State<HomeScreen> {
                                         decoration: BoxDecoration(
                                           gradient: LinearGradient(
                                             colors: [
-                                              Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                                              Theme.of(context).colorScheme.secondary.withValues(alpha: 0.3),
+                                              Theme.of(context)
+                                                  .colorScheme
+                                                  .primary
+                                                  .withValues(alpha: 0.3),
+                                              Theme.of(context)
+                                                  .colorScheme
+                                                  .secondary
+                                                  .withValues(alpha: 0.3),
                                             ],
                                           ),
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
                                         ),
                                         child: Center(
-                                          child: Icon(Icons.cake, size: isMobile ? 60 : 70, color: Colors.white),
+                                          child: Icon(
+                                            Icons.cake,
+                                            size: isMobile ? 60 : 70,
+                                            color: Colors.white,
+                                          ),
                                         ),
                                       );
                                     },
-                                    loadingBuilder: (context, child, loadingProgress) {
-                                      if (loadingProgress == null) return child;
-                                      return Container(
-                                        height: isMobile ? 150 : 180,
-                                        alignment: Alignment.center,
-                                        child: CircularProgressIndicator(
-                                          value: loadingProgress.expectedTotalBytes != null
-                                              ? loadingProgress.cumulativeBytesLoaded /
-                                                  loadingProgress.expectedTotalBytes!
-                                              : null,
-                                        ),
-                                      );
-                                    },
+                                    loadingBuilder:
+                                        (context, child, loadingProgress) {
+                                          if (loadingProgress == null)
+                                            return child;
+                                          return Container(
+                                            height: isMobile ? 150 : 180,
+                                            alignment: Alignment.center,
+                                            child: CircularProgressIndicator(
+                                              value:
+                                                  loadingProgress
+                                                          .expectedTotalBytes !=
+                                                      null
+                                                  ? loadingProgress
+                                                            .cumulativeBytesLoaded /
+                                                        loadingProgress
+                                                            .expectedTotalBytes!
+                                                  : null,
+                                            ),
+                                          );
+                                        },
                                   ),
                                 ),
                               ),
@@ -2310,45 +2347,70 @@ class _HomeScreenState extends State<HomeScreen> {
                                 height: 1.4,
                               ),
                               textAlign: TextAlign.center,
-                              maxLines: 3,
+                              maxLines: 8,
                               overflow: TextOverflow.ellipsis,
                             ),
 
                           const SizedBox(height: 12),
 
-                          // Stock disponible
-                          if (producto.stock > 0)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.green.shade50,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.green.shade200),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.inventory, size: 16, color: Colors.green.shade700),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Stock disponible: ${producto.stock}',
-                                    style: TextStyle(
-                                      color: Colors.green.shade900,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
+                          // Indicador de stock
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: producto.stock > 0
+                                  ? Colors.green.shade50
+                                  : Colors.red.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: producto.stock > 0
+                                    ? Colors.green.shade200
+                                    : Colors.red.shade200,
                               ),
                             ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  producto.stock > 0
+                                      ? Icons.check_circle
+                                      : Icons.cancel,
+                                  size: 16,
+                                  color: producto.stock > 0
+                                      ? Colors.green.shade700
+                                      : Colors.red.shade700,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  producto.stock > 0
+                                      ? 'Disponible'
+                                      : 'Sin stock',
+                                  style: TextStyle(
+                                    color: producto.stock > 0
+                                        ? Colors.green.shade900
+                                        : Colors.red.shade900,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
 
                           const SizedBox(height: 12),
 
                           // Precio
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Column(
@@ -2366,7 +2428,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   style: TextStyle(
                                     fontSize: isMobile ? 26 : 28,
                                     fontWeight: FontWeight.bold,
-                                    color: Theme.of(context).colorScheme.primary,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                   ),
                                 ),
                               ],
@@ -2379,10 +2443,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton.icon(
-                              onPressed: producto.disponible && producto.stock > 0
+                              onPressed:
+                                  producto.disponible && producto.stock > 0
                                   ? () {
-                                      final authProvider = AuthProvider.instance;
-                                      final bool isAuthenticated = authProvider.authState == AuthState.authenticated;
+                                      final authProvider =
+                                          AuthProvider.instance;
+                                      final bool isAuthenticated =
+                                          authProvider.authState ==
+                                          AuthState.authenticated;
 
                                       if (!isAuthenticated) {
                                         // Mostrar mensaje, cerrar modal y redirigir a login
@@ -2395,14 +2463,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => const LoginVista(),
+                                            builder: (context) =>
+                                                const LoginVista(),
                                           ),
                                         );
                                         return;
                                       }
 
                                       // Verificar si el usuario es empleado
-                                      if (authProvider.currentUser?.rol == 'empleado') {
+                                      if (authProvider.currentUser?.rol ==
+                                          'empleado') {
                                         showAppMessage(
                                           context,
                                           'Los empleados no pueden realizar compras',
@@ -2421,9 +2491,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                     }
                                   : null,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).colorScheme.primary,
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -2458,10 +2532,7 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.grey.shade300,
-          width: 2,
-        ),
+        border: Border.all(color: Colors.grey.shade300, width: 2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -2970,10 +3041,14 @@ class _HomeScreenState extends State<HomeScreen> {
         final estado = data['estado'] ?? '';
         final metodoPago = data['metodoPago'] ?? '';
         final fecha = data['fecha'] != null
-            ? DateFormat('dd/MM/yyyy').format((data['fecha'] as Timestamp).toDate())
+            ? DateFormat(
+                'dd/MM/yyyy',
+              ).format((data['fecha'] as Timestamp).toDate())
             : 'N/A';
 
-        csvContent.writeln('$numero,$clienteNombre,$total,$estado,$metodoPago,$fecha');
+        csvContent.writeln(
+          '$numero,$clienteNombre,$total,$estado,$metodoPago,$fecha',
+        );
       }
 
       // Generar nombre de archivo
@@ -2982,7 +3057,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // Descargar archivo
       final bytes = utf8.encode(csvContent.toString());
-      final blob = html.Blob([Uint8List.fromList(bytes)], 'text/csv;charset=utf-8');
+      final blob = html.Blob([
+        Uint8List.fromList(bytes),
+      ], 'text/csv;charset=utf-8');
       final url = html.Url.createObjectUrlFromBlob(blob);
       html.AnchorElement(href: url)
         ..setAttribute('download', nombreArchivo)
@@ -3049,7 +3126,8 @@ class _PromocionDirectaCardState extends State<_PromocionDirectaCard> {
                 builder: (context, constraints) {
                   final screenHeight = MediaQuery.of(context).size.height;
                   final maxDialogHeight = screenHeight * 0.85;
-                  final availableImageHeight = maxDialogHeight - 350; // Espacio para contenido y botones
+                  final availableImageHeight =
+                      maxDialogHeight - 350; // Espacio para contenido y botones
 
                   return Container(
                     constraints: BoxConstraints(
@@ -3064,10 +3142,14 @@ class _PromocionDirectaCardState extends State<_PromocionDirectaCard> {
                         if (imagenUrl != null && imagenUrl.isNotEmpty)
                           Container(
                             constraints: BoxConstraints(
-                              maxHeight: availableImageHeight > 150 ? availableImageHeight : 150,
+                              maxHeight: availableImageHeight > 150
+                                  ? availableImageHeight
+                                  : 150,
                             ),
                             child: ClipRRect(
-                              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(16),
+                              ),
                               child: Image.network(
                                 imagenUrl,
                                 width: double.infinity,
@@ -3076,172 +3158,194 @@ class _PromocionDirectaCardState extends State<_PromocionDirectaCard> {
                                   return Container(
                                     height: 200,
                                     color: Colors.grey.shade200,
-                                    child: const Icon(Icons.image_not_supported, size: 50),
+                                    child: const Icon(
+                                      Icons.image_not_supported,
+                                      size: 50,
+                                    ),
                                   );
                                 },
                               ),
                             ),
                           ),
 
-                    // Contenido
-                    Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Título
-                          Text(
-                            titulo,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Descripción
-                          if (descripcion.isNotEmpty) ...[
-                            Text(
-                              descripcion,
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                            const SizedBox(height: 16),
-                          ],
-
-                          // Precios
-                          if (tienePrecios) ...[
-                            const Divider(),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Precio Original',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'S/. ${precioOriginal.toStringAsFixed(2)}',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        decoration: TextDecoration.lineThrough,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                  ],
+                        // Contenido
+                        Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Título
+                              Text(
+                                titulo,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
+                              ),
+                              const SizedBox(height: 12),
+
+                              // Descripción
+                              if (descripcion.isNotEmpty) ...[
+                                Text(
+                                  descripcion,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                                const SizedBox(height: 16),
+                              ],
+
+                              // Precios
+                              if (tienePrecios) ...[
+                                const Divider(),
+                                const SizedBox(height: 12),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.red,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        '-${descuento.toInt()}%',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Precio Original',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey.shade600,
+                                          ),
                                         ),
-                                      ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'S/. ${precioOriginal.toStringAsFixed(2)}',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            decoration:
+                                                TextDecoration.lineThrough,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'S/. ${precioDescuento.toStringAsFixed(2)}',
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.red.shade700,
-                                      ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.red,
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            '-${descuento.toInt()}%',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'S/. ${precioDescuento.toStringAsFixed(2)}',
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.red.shade700,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
                               ],
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-
-                    // Botones de acción
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                              ),
-                              child: const Text('Cerrar'),
-                            ),
+                            ],
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            flex: 2,
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                final authProvider = AuthProvider.instance;
-                                final bool isAuthenticated = authProvider.authState == AuthState.authenticated;
+                        ),
 
-                                if (!isAuthenticated) {
-                                  // Mostrar mensaje, cerrar diálogo y redirigir a login
-                                  showAppMessage(
-                                    context,
-                                    'Debes iniciar sesión para realizar compras',
-                                    type: MessageType.warning,
-                                  );
-                                  Navigator.pop(context);
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const LoginVista(),
+                        // Botones de acción
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
                                     ),
-                                  );
-                                  return;
-                                }
-
-                                // Verificar si el usuario es empleado
-                                if (authProvider.currentUser?.rol == 'empleado') {
-                                  showAppMessage(
-                                    context,
-                                    'Los empleados no pueden realizar compras',
-                                    type: MessageType.warning,
-                                  );
-                                  return;
-                                }
-
-                                // Cerrar diálogo y mostrar mensaje de éxito
-                                Navigator.pop(context);
-                                showAppMessage(
-                                  context,
-                                  '$titulo - Compra exitosa',
-                                  type: MessageType.success,
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                backgroundColor: Theme.of(context).colorScheme.primary,
-                                foregroundColor: Colors.white,
+                                  ),
+                                  child: const Text('Cerrar'),
+                                ),
                               ),
-                              icon: const Icon(Icons.shopping_cart),
-                              label: const Text('Comprar'),
-                            ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                flex: 2,
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    final authProvider = AuthProvider.instance;
+                                    final bool isAuthenticated =
+                                        authProvider.authState ==
+                                        AuthState.authenticated;
+
+                                    if (!isAuthenticated) {
+                                      // Mostrar mensaje, cerrar diálogo y redirigir a login
+                                      showAppMessage(
+                                        context,
+                                        'Debes iniciar sesión para realizar compras',
+                                        type: MessageType.warning,
+                                      );
+                                      Navigator.pop(context);
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const LoginVista(),
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    // Verificar si el usuario es empleado
+                                    if (authProvider.currentUser?.rol ==
+                                        'empleado') {
+                                      showAppMessage(
+                                        context,
+                                        'Los empleados no pueden realizar compras',
+                                        type: MessageType.warning,
+                                      );
+                                      return;
+                                    }
+
+                                    // Cerrar diálogo y mostrar mensaje de éxito
+                                    Navigator.pop(context);
+                                    showAppMessage(
+                                      context,
+                                      '$titulo - Compra exitosa',
+                                      type: MessageType.success,
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
+                                    backgroundColor: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                    foregroundColor: Colors.white,
+                                  ),
+                                  icon: const Icon(Icons.shopping_cart),
+                                  label: const Text('Comprar'),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
+                        ),
                       ],
                     ),
                   );
@@ -3260,7 +3364,9 @@ class _PromocionDirectaCardState extends State<_PromocionDirectaCard> {
               child: Stack(
                 children: [
                   ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(16),
+                    ),
                     child: imagenUrl != null && imagenUrl.isNotEmpty
                         ? Image.network(
                             imagenUrl,
@@ -3269,7 +3375,9 @@ class _PromocionDirectaCardState extends State<_PromocionDirectaCard> {
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
-                                color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                                color: Theme.of(
+                                  context,
+                                ).primaryColor.withValues(alpha: 0.1),
                                 child: Icon(
                                   Icons.local_offer,
                                   size: 60,
@@ -3279,7 +3387,9 @@ class _PromocionDirectaCardState extends State<_PromocionDirectaCard> {
                             },
                           )
                         : Container(
-                            color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                            color: Theme.of(
+                              context,
+                            ).primaryColor.withValues(alpha: 0.1),
                             child: Icon(
                               Icons.local_offer,
                               size: 60,
@@ -3294,7 +3404,10 @@ class _PromocionDirectaCardState extends State<_PromocionDirectaCard> {
                       top: 8,
                       right: 8,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.red,
                           borderRadius: BorderRadius.circular(12),
@@ -3361,7 +3474,10 @@ class _PromocionDirectaCardState extends State<_PromocionDirectaCard> {
                     ),
                   ] else if (descuento > 0)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.orange.shade100,
                         borderRadius: BorderRadius.circular(8),
@@ -3448,7 +3564,9 @@ class _PromocionDirectaCardState extends State<_PromocionDirectaCard> {
                         child: ElevatedButton.icon(
                           onPressed: () {
                             final authProvider = AuthProvider.instance;
-                            final bool isAuthenticated = authProvider.authState == AuthState.authenticated;
+                            final bool isAuthenticated =
+                                authProvider.authState ==
+                                AuthState.authenticated;
 
                             if (!isAuthenticated) {
                               // Mostrar mensaje y redirigir a login
@@ -3489,7 +3607,9 @@ class _PromocionDirectaCardState extends State<_PromocionDirectaCard> {
                             });
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primary,
                             foregroundColor: Colors.white,
                             padding: EdgeInsets.symmetric(
                               vertical: isMobile ? 6 : 8,
@@ -3500,7 +3620,10 @@ class _PromocionDirectaCardState extends State<_PromocionDirectaCard> {
                             ),
                             elevation: 2,
                           ),
-                          icon: Icon(Icons.shopping_cart, size: isMobile ? 14 : 16),
+                          icon: Icon(
+                            Icons.shopping_cart,
+                            size: isMobile ? 14 : 16,
+                          ),
                           label: Text(
                             'Comprar',
                             style: TextStyle(

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:excel/excel.dart';
 import 'package:flutter/foundation.dart';
@@ -19,11 +21,10 @@ class ReporteExcelService {
       // Eliminar la hoja por defecto
       excel.delete('Sheet1');
 
-      // Pequeño delay para evitar race conditions de Firestore
-      await Future.delayed(const Duration(milliseconds: 100));
-
-      // Obtener datos de Firebase
+      // Obtener datos de Firebase (sin delay, directamente)
       debugPrint('📊 Obteniendo datos desde Firebase...');
+
+      // Obtener cada colección de forma independiente con manejo de errores individual
       final productos = await _obtenerProductos();
       debugPrint('✅ Productos obtenidos: ${productos.length}');
 
@@ -35,6 +36,17 @@ class ReporteExcelService {
 
       final usuarios = await _obtenerUsuarios();
       debugPrint('✅ Usuarios obtenidos: ${usuarios.length}');
+
+      // VERIFICACIÓN CRÍTICA: Confirmar que todas las listas tienen datos
+      debugPrint('📋 RESUMEN DE DATOS CARGADOS:');
+      debugPrint('   • Productos: ${productos.length}');
+      debugPrint('   • Promociones: ${promociones.length}');
+      debugPrint('   • Pedidos: ${pedidos.length}');
+      debugPrint('   • Usuarios: ${usuarios.length}');
+
+      if (productos.isEmpty && promociones.isEmpty && pedidos.isEmpty && usuarios.isEmpty) {
+        debugPrint('⚠️ ADVERTENCIA: Todas las colecciones están vacías');
+      }
 
       // Crear hojas con datos
       debugPrint('📝 Creando hojas del Excel...');
@@ -70,12 +82,32 @@ class ReporteExcelService {
     }
   }
 
-  /// Obtener productos desde Firebase
+  /// Obtener productos desde Firebase con consulta directa optimizada
   Future<List<Map<String, dynamic>>> _obtenerProductos() async {
     try {
-      final snapshot = await _firestore.collection('productos').get();
-      return snapshot.docs.map((doc) {
+      debugPrint('🔍 Consultando colección "productos"...');
+
+      // Consulta DIRECTA con get() - UNA SOLA LLAMADA
+      final snapshot = await _firestore
+          .collection('productos')
+          .get(const GetOptions(source: Source.serverAndCache))
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () {
+              debugPrint('⏱️ Timeout al obtener productos');
+              throw TimeoutException('Timeout al obtener productos');
+            },
+          );
+
+      debugPrint('📦 Documentos de productos recibidos: ${snapshot.docs.length}');
+
+      if (snapshot.docs.isEmpty) {
+        debugPrint('⚠️ No hay productos en la base de datos');
+      }
+
+      final productos = snapshot.docs.map((doc) {
         final data = doc.data();
+        debugPrint('  - Producto encontrado: ${data['nombre']} (${doc.id})');
         return {
           'id': doc.id,
           'nombre': data['nombre'] ?? '',
@@ -86,8 +118,12 @@ class ReporteExcelService {
           'descripcion': data['descripcion'] ?? '',
         };
       }).toList();
-    } catch (e) {
-      debugPrint('Error al obtener productos: $e');
+
+      debugPrint('✅ Productos procesados: ${productos.length}');
+      return productos;
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error al obtener productos: $e');
+      debugPrint('Stack trace: $stackTrace');
       return [];
     }
   }
@@ -95,23 +131,46 @@ class ReporteExcelService {
   /// Obtener promociones desde Firebase
   Future<List<Map<String, dynamic>>> _obtenerPromociones() async {
     try {
-      final snapshot = await _firestore.collection('promociones').get();
-      return snapshot.docs.map((doc) {
+      debugPrint('🔍 Consultando colección "promociones"...');
+
+      // Consulta DIRECTA con get() - UNA SOLA LLAMADA
+      final snapshot = await _firestore
+          .collection('promociones')
+          .get(const GetOptions(source: Source.serverAndCache))
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () {
+              debugPrint('⏱️ Timeout al obtener promociones');
+              throw TimeoutException('Timeout al obtener promociones');
+            },
+          );
+
+      debugPrint('📦 Documentos de promociones recibidos: ${snapshot.docs.length}');
+
+      if (snapshot.docs.isEmpty) {
+        debugPrint('⚠️ No hay promociones en la base de datos');
+      }
+
+      final promociones = snapshot.docs.map((doc) {
         final data = doc.data();
+        debugPrint('  - Promoción encontrada: ${data['titulo']} (${doc.id})');
         return {
           'id': doc.id,
           'titulo': data['titulo'] ?? '',
           'descripcion': data['descripcion'] ?? '',
           'descuento': (data['descuento'] ?? 0).toDouble(),
-          'precioOriginal': (data['precioOriginal'] ?? 0).toDouble(),
-          'precioDescuento': (data['precioDescuento'] ?? 0).toDouble(),
+          'productosAplicables': (data['productosAplicables'] as List<dynamic>?)?.length ?? 0,
           'activa': data['activa'] ?? false,
           'fechaInicio': _formatearFecha(data['fechaInicio']),
           'fechaFin': _formatearFecha(data['fechaFin']),
         };
       }).toList();
-    } catch (e) {
-      debugPrint('Error al obtener promociones: $e');
+
+      debugPrint('✅ Promociones procesadas: ${promociones.length}');
+      return promociones;
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error al obtener promociones: $e');
+      debugPrint('Stack trace: $stackTrace');
       return [];
     }
   }
@@ -119,12 +178,33 @@ class ReporteExcelService {
   /// Obtener pedidos desde Firebase
   Future<List<Map<String, dynamic>>> _obtenerPedidos() async {
     try {
-      final snapshot = await _firestore.collection('pedidos').get();
-      return snapshot.docs.map((doc) {
+      debugPrint('🔍 Consultando colección "pedidos"...');
+
+      // Consulta DIRECTA con get() - UNA SOLA LLAMADA
+      final snapshot = await _firestore
+          .collection('pedidos')
+          .get(const GetOptions(source: Source.serverAndCache))
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () {
+              debugPrint('⏱️ Timeout al obtener pedidos');
+              throw TimeoutException('Timeout al obtener pedidos');
+            },
+          );
+
+      debugPrint('📦 Documentos de pedidos recibidos: ${snapshot.docs.length}');
+
+      if (snapshot.docs.isEmpty) {
+        debugPrint('⚠️ No hay pedidos en la base de datos');
+      }
+
+      final pedidos = snapshot.docs.map((doc) {
         final data = doc.data();
         // Intentar obtener 'productos' o 'items' (compatibilidad con diferentes estructuras)
         final productos = (data['productos'] as List<dynamic>?) ??
                          (data['items'] as List<dynamic>?) ?? [];
+
+        debugPrint('  - Pedido encontrado: ${data['numero'] ?? doc.id} - Cliente: ${data['clienteNombre']}');
 
         return {
           'id': doc.id,
@@ -139,8 +219,12 @@ class ReporteExcelService {
           'cantidadProductos': productos.length,
         };
       }).toList();
-    } catch (e) {
-      debugPrint('Error al obtener pedidos: $e');
+
+      debugPrint('✅ Pedidos procesados: ${pedidos.length}');
+      return pedidos;
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error al obtener pedidos: $e');
+      debugPrint('Stack trace: $stackTrace');
       return [];
     }
   }
@@ -148,9 +232,29 @@ class ReporteExcelService {
   /// Obtener usuarios desde Firebase
   Future<List<Map<String, dynamic>>> _obtenerUsuarios() async {
     try {
-      final snapshot = await _firestore.collection('usuarios').get();
-      return snapshot.docs.map((doc) {
+      debugPrint('🔍 Consultando colección "usuarios"...');
+
+      // Consulta DIRECTA con get() - UNA SOLA LLAMADA
+      final snapshot = await _firestore
+          .collection('usuarios')
+          .get(const GetOptions(source: Source.serverAndCache))
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () {
+              debugPrint('⏱️ Timeout al obtener usuarios');
+              throw TimeoutException('Timeout al obtener usuarios');
+            },
+          );
+
+      debugPrint('📦 Documentos de usuarios recibidos: ${snapshot.docs.length}');
+
+      if (snapshot.docs.isEmpty) {
+        debugPrint('⚠️ No hay usuarios en la base de datos');
+      }
+
+      final usuarios = snapshot.docs.map((doc) {
         final data = doc.data();
+        debugPrint('  - Usuario encontrado: ${data['nombre']} (${data['email']})');
         return {
           'id': doc.id,
           'nombre': data['nombre'] ?? '',
@@ -161,8 +265,12 @@ class ReporteExcelService {
           'fechaCreacion': _formatearFecha(data['fechaCreacion']),
         };
       }).toList();
-    } catch (e) {
-      debugPrint('Error al obtener usuarios: $e');
+
+      debugPrint('✅ Usuarios procesados: ${usuarios.length}');
+      return usuarios;
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error al obtener usuarios: $e');
+      debugPrint('Stack trace: $stackTrace');
       return [];
     }
   }
@@ -344,6 +452,7 @@ class ReporteExcelService {
 
   /// Crear hoja de productos
   void _crearHojaProductos(Excel excel, List<Map<String, dynamic>> productos) {
+    debugPrint('📝 Creando hoja de Productos con ${productos.length} registros...');
     final sheet = excel['Productos'];
 
     // Configurar estilos
@@ -365,23 +474,27 @@ class ReporteExcelService {
 
     // Datos
     for (var i = 0; i < productos.length; i++) {
-      final producto = productos[i];
-      final rowIndex = i + 1;
+      try {
+        final producto = productos[i];
+        final rowIndex = i + 1;
 
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex))
-        .value = TextCellValue(producto['id'].toString().substring(0, 8));
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex))
-        .value = TextCellValue(producto['nombre'].toString());
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex))
-        .value = TextCellValue(producto['categoria'].toString());
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex))
-        .value = DoubleCellValue(producto['precio']);
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex))
-        .value = IntCellValue(producto['stock']);
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowIndex))
-        .value = TextCellValue(producto['estado'].toString());
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: rowIndex))
-        .value = TextCellValue(producto['descripcion'].toString());
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex))
+          .value = TextCellValue((producto['id']?.toString() ?? '').substring(0, (producto['id']?.toString() ?? '').length.clamp(0, 8)));
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex))
+          .value = TextCellValue(producto['nombre']?.toString() ?? '');
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex))
+          .value = TextCellValue(producto['categoria']?.toString() ?? '');
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex))
+          .value = DoubleCellValue((producto['precio'] ?? 0).toDouble());
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex))
+          .value = IntCellValue(producto['stock'] ?? 0);
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowIndex))
+          .value = TextCellValue(producto['estado']?.toString() ?? '');
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: rowIndex))
+          .value = TextCellValue(producto['descripcion']?.toString() ?? '');
+      } catch (e) {
+        debugPrint('⚠️ Error al procesar producto en fila ${i + 1}: $e');
+      }
     }
 
     // Ancho de columnas configurado automáticamente por Excel
@@ -389,6 +502,7 @@ class ReporteExcelService {
 
   /// Crear hoja de promociones
   void _crearHojaPromociones(Excel excel, List<Map<String, dynamic>> promociones) {
+    debugPrint('📝 Creando hoja de Promociones con ${promociones.length} registros...');
     final sheet = excel['Promociones'];
 
     final headerStyle = CellStyle(
@@ -398,7 +512,7 @@ class ReporteExcelService {
       horizontalAlign: HorizontalAlign.Center,
     );
 
-    final headers = ['ID', 'Título', 'Descuento (%)', 'Precio Original', 'Precio Descuento', 'Activa', 'Fecha Inicio', 'Fecha Fin'];
+    final headers = ['ID', 'Título', 'Descripción', 'Descuento (%)', 'Productos Aplicables', 'Activa', 'Fecha Inicio', 'Fecha Fin'];
     for (var i = 0; i < headers.length; i++) {
       final cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0));
       cell.value = TextCellValue(headers[i]);
@@ -406,30 +520,35 @@ class ReporteExcelService {
     }
 
     for (var i = 0; i < promociones.length; i++) {
-      final promo = promociones[i];
-      final rowIndex = i + 1;
+      try {
+        final promo = promociones[i];
+        final rowIndex = i + 1;
 
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex))
-        .value = TextCellValue(promo['id'].toString().substring(0, 8));
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex))
-        .value = TextCellValue(promo['titulo'].toString());
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex))
-        .value = DoubleCellValue(promo['descuento']);
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex))
-        .value = DoubleCellValue(promo['precioOriginal']);
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex))
-        .value = DoubleCellValue(promo['precioDescuento']);
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowIndex))
-        .value = TextCellValue(promo['activa'] ? 'Sí' : 'No');
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: rowIndex))
-        .value = TextCellValue(promo['fechaInicio'].toString());
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: rowIndex))
-        .value = TextCellValue(promo['fechaFin'].toString());
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex))
+          .value = TextCellValue((promo['id']?.toString() ?? '').substring(0, (promo['id']?.toString() ?? '').length.clamp(0, 8)));
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex))
+          .value = TextCellValue(promo['titulo']?.toString() ?? '');
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex))
+          .value = TextCellValue(promo['descripcion']?.toString() ?? '');
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex))
+          .value = DoubleCellValue((promo['descuento'] ?? 0).toDouble());
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex))
+          .value = IntCellValue(promo['productosAplicables'] ?? 0);
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowIndex))
+          .value = TextCellValue((promo['activa'] ?? false) ? 'Sí' : 'No');
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: rowIndex))
+          .value = TextCellValue(promo['fechaInicio']?.toString() ?? 'N/A');
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: rowIndex))
+          .value = TextCellValue(promo['fechaFin']?.toString() ?? 'N/A');
+      } catch (e) {
+        debugPrint('⚠️ Error al procesar promoción en fila ${i + 1}: $e');
+      }
     }
   }
 
   /// Crear hoja de pedidos
   void _crearHojaPedidos(Excel excel, List<Map<String, dynamic>> pedidos) {
+    debugPrint('📝 Creando hoja de Pedidos con ${pedidos.length} registros...');
     final sheet = excel['Pedidos'];
 
     final headerStyle = CellStyle(
@@ -447,28 +566,33 @@ class ReporteExcelService {
     }
 
     for (var i = 0; i < pedidos.length; i++) {
-      final pedido = pedidos[i];
-      final rowIndex = i + 1;
+      try {
+        final pedido = pedidos[i];
+        final rowIndex = i + 1;
 
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex))
-        .value = TextCellValue(pedido['numero'].toString());
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex))
-        .value = TextCellValue(pedido['clienteNombre'].toString());
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex))
-        .value = DoubleCellValue(pedido['total']);
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex))
-        .value = TextCellValue(pedido['estado'].toString());
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex))
-        .value = TextCellValue(pedido['metodoPago'].toString());
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowIndex))
-        .value = TextCellValue(pedido['fecha'].toString());
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: rowIndex))
-        .value = IntCellValue(pedido['cantidadProductos']);
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex))
+          .value = TextCellValue(pedido['numero']?.toString() ?? '');
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex))
+          .value = TextCellValue(pedido['clienteNombre']?.toString() ?? '');
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex))
+          .value = DoubleCellValue((pedido['total'] ?? 0).toDouble());
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex))
+          .value = TextCellValue(pedido['estado']?.toString() ?? '');
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex))
+          .value = TextCellValue(pedido['metodoPago']?.toString() ?? '');
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowIndex))
+          .value = TextCellValue(pedido['fecha']?.toString() ?? '');
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: rowIndex))
+          .value = IntCellValue(pedido['cantidadProductos'] ?? 0);
+      } catch (e) {
+        debugPrint('⚠️ Error al procesar pedido en fila ${i + 1}: $e');
+      }
     }
   }
 
   /// Crear hoja de usuarios
   void _crearHojaUsuarios(Excel excel, List<Map<String, dynamic>> usuarios) {
+    debugPrint('📝 Creando hoja de Usuarios con ${usuarios.length} registros...');
     final sheet = excel['Usuarios'];
 
     final headerStyle = CellStyle(
@@ -486,23 +610,27 @@ class ReporteExcelService {
     }
 
     for (var i = 0; i < usuarios.length; i++) {
-      final usuario = usuarios[i];
-      final rowIndex = i + 1;
+      try {
+        final usuario = usuarios[i];
+        final rowIndex = i + 1;
 
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex))
-        .value = TextCellValue(usuario['id'].toString().substring(0, 8));
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex))
-        .value = TextCellValue(usuario['nombre'].toString());
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex))
-        .value = TextCellValue(usuario['email'].toString());
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex))
-        .value = TextCellValue(usuario['rol'].toString());
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex))
-        .value = TextCellValue(usuario['estado'].toString());
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowIndex))
-        .value = TextCellValue(usuario['telefono'].toString());
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: rowIndex))
-        .value = TextCellValue(usuario['fechaCreacion'].toString());
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex))
+          .value = TextCellValue((usuario['id']?.toString() ?? '').substring(0, (usuario['id']?.toString() ?? '').length.clamp(0, 8)));
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex))
+          .value = TextCellValue(usuario['nombre']?.toString() ?? '');
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex))
+          .value = TextCellValue(usuario['email']?.toString() ?? '');
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex))
+          .value = TextCellValue(usuario['rol']?.toString() ?? '');
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex))
+          .value = TextCellValue(usuario['estado']?.toString() ?? '');
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowIndex))
+          .value = TextCellValue(usuario['telefono']?.toString() ?? '');
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: rowIndex))
+          .value = TextCellValue(usuario['fechaCreacion']?.toString() ?? '');
+      } catch (e) {
+        debugPrint('⚠️ Error al procesar usuario en fila ${i + 1}: $e');
+      }
     }
   }
 
@@ -833,27 +961,280 @@ class ReporteExcelService {
     }
   }
 
-  /// Descargar el archivo Excel en el navegador
-  Future<void> _descargarExcel(Excel excel) async {
+  /// Genera un reporte Excel de pedidos para un usuario específico
+  Future<void> generarReporteUsuario(String nombreCliente, List<DocumentSnapshot> pedidos) async {
+    try {
+      debugPrint('🔄 Generando reporte de pedidos para: $nombreCliente');
+
+      // Crear el archivo Excel
+      final excel = Excel.createExcel();
+
+      // Eliminar la hoja por defecto
+      excel.delete('Sheet1');
+
+      // Crear hoja de información del cliente
+      _crearHojaInfoCliente(excel, nombreCliente, pedidos);
+
+      // Crear hoja con todos los pedidos del cliente
+      _crearHojaPedidosCliente(excel, pedidos);
+
+      // Descargar el archivo
+      final fechaActual = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final nombreArchivo = 'Pedidos_${nombreCliente.replaceAll(' ', '_')}_$fechaActual.xlsx';
+
+      await _descargarExcelConNombre(excel, nombreArchivo);
+      debugPrint('✅ Reporte de usuario generado exitosamente');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error al generar reporte de usuario: $e');
+      debugPrint('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Crea una hoja con información resumida del cliente
+  void _crearHojaInfoCliente(Excel excel, String nombreCliente, List<DocumentSnapshot> pedidos) {
+    final sheet = excel['Resumen Cliente'];
+
+    // Calcular estadísticas
+    double totalGastado = 0;
+    int totalProductos = 0;
+    Map<String, int> estadosCount = {};
+
+    for (var pedido in pedidos) {
+      final data = pedido.data() as Map<String, dynamic>;
+      totalGastado += (data['total'] ?? 0).toDouble();
+      final items = data['items'] as List<dynamic>? ?? [];
+      totalProductos += items.length;
+      final estado = data['estado'] ?? 'pendiente';
+      estadosCount[estado] = (estadosCount[estado] ?? 0) + 1;
+    }
+
+    // Estilo para encabezados
+    final headerStyle = CellStyle(
+      bold: true,
+      fontSize: 14,
+      backgroundColorHex: ExcelColor.fromHexString('#FF9800'),
+      fontColorHex: ExcelColor.white,
+    );
+
+    // Estilo para datos
+    final dataStyle = CellStyle(fontSize: 12);
+
+    // Título
+    sheet.cell(CellIndex.indexByString('A1'))
+      ..value = TextCellValue('REPORTE DE PEDIDOS - CLIENTE')
+      ..cellStyle = CellStyle(bold: true, fontSize: 16);
+
+    sheet.merge(CellIndex.indexByString('A1'), CellIndex.indexByString('B1'));
+
+    // Información del cliente
+    int row = 3;
+    sheet.cell(CellIndex.indexByString('A$row'))
+      ..value = TextCellValue('Cliente:')
+      ..cellStyle = headerStyle;
+    sheet.cell(CellIndex.indexByString('B$row'))
+      ..value = TextCellValue(nombreCliente)
+      ..cellStyle = dataStyle;
+
+    row++;
+    sheet.cell(CellIndex.indexByString('A$row'))
+      ..value = TextCellValue('Total de Pedidos:')
+      ..cellStyle = headerStyle;
+    sheet.cell(CellIndex.indexByString('B$row'))
+      ..value = IntCellValue(pedidos.length)
+      ..cellStyle = dataStyle;
+
+    row++;
+    sheet.cell(CellIndex.indexByString('A$row'))
+      ..value = TextCellValue('Total Gastado:')
+      ..cellStyle = headerStyle;
+    sheet.cell(CellIndex.indexByString('B$row'))
+      ..value = TextCellValue('S/. ${totalGastado.toStringAsFixed(2)}')
+      ..cellStyle = dataStyle;
+
+    row++;
+    sheet.cell(CellIndex.indexByString('A$row'))
+      ..value = TextCellValue('Total de Productos:')
+      ..cellStyle = headerStyle;
+    sheet.cell(CellIndex.indexByString('B$row'))
+      ..value = IntCellValue(totalProductos)
+      ..cellStyle = dataStyle;
+
+    // Estadísticas por estado
+    row += 2;
+    sheet.cell(CellIndex.indexByString('A$row'))
+      ..value = TextCellValue('PEDIDOS POR ESTADO')
+      ..cellStyle = CellStyle(bold: true, fontSize: 14);
+
+    row++;
+    sheet.cell(CellIndex.indexByString('A$row'))
+      ..value = TextCellValue('Estado')
+      ..cellStyle = headerStyle;
+    sheet.cell(CellIndex.indexByString('B$row'))
+      ..value = TextCellValue('Cantidad')
+      ..cellStyle = headerStyle;
+
+    estadosCount.forEach((estado, cantidad) {
+      row++;
+      sheet.cell(CellIndex.indexByString('A$row'))
+        ..value = TextCellValue(estado.toUpperCase())
+        ..cellStyle = dataStyle;
+      sheet.cell(CellIndex.indexByString('B$row'))
+        ..value = IntCellValue(cantidad)
+        ..cellStyle = dataStyle;
+    });
+  }
+
+  /// Crea una hoja con el detalle de todos los pedidos del cliente
+  void _crearHojaPedidosCliente(Excel excel, List<DocumentSnapshot> pedidos) {
+    final sheet = excel['Detalle de Pedidos'];
+
+    // Estilo para encabezados
+    final headerStyle = CellStyle(
+      bold: true,
+      fontSize: 12,
+      backgroundColorHex: ExcelColor.fromHexString('#FF9800'),
+      fontColorHex: ExcelColor.white,
+    );
+
+    final dataStyle = CellStyle(fontSize: 11);
+
+    // Encabezados
+    final headers = [
+      'Nº Pedido',
+      'Fecha',
+      'Estado',
+      'Método Pago',
+      'Método Entrega',
+      'Productos',
+      'Total'
+    ];
+
+    for (int i = 0; i < headers.length; i++) {
+      sheet.cell(CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0))
+        ..value = TextCellValue(headers[i])
+        ..cellStyle = headerStyle;
+    }
+
+    // Datos
+    int row = 1;
+    for (var pedido in pedidos) {
+      final data = pedido.data() as Map<String, dynamic>;
+      final numeroPedido = data['numeroPedido'] ?? pedido.id;
+      final fechaPedido = (data['fechaPedido'] as Timestamp?)?.toDate();
+      final estado = data['estado'] ?? 'pendiente';
+      final metodoPago = data['metodoPago'] ?? 'N/A';
+      final metodoEntrega = data['metodoEntrega'] ?? 'N/A';
+      final items = data['items'] as List<dynamic>? ?? [];
+      final total = (data['total'] ?? 0).toDouble();
+
+      // Productos concatenados
+      final productosStr = items.map((item) {
+        final nombre = item['productoNombre'] ?? 'Producto';
+        final cantidad = item['cantidad'] ?? 1;
+        return '$nombre (x$cantidad)';
+      }).join(', ');
+
+      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+        ..value = TextCellValue(numeroPedido.toString())
+        ..cellStyle = dataStyle;
+
+      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
+        ..value = TextCellValue(
+            fechaPedido != null ? DateFormat('dd/MM/yyyy HH:mm').format(fechaPedido) : 'N/A')
+        ..cellStyle = dataStyle;
+
+      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
+        ..value = TextCellValue(estado.toUpperCase())
+        ..cellStyle = dataStyle;
+
+      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: row))
+        ..value = TextCellValue(metodoPago.toUpperCase())
+        ..cellStyle = dataStyle;
+
+      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: row))
+        ..value = TextCellValue(metodoEntrega.toUpperCase())
+        ..cellStyle = dataStyle;
+
+      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: row))
+        ..value = TextCellValue(productosStr)
+        ..cellStyle = dataStyle;
+
+      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: row))
+        ..value = TextCellValue('S/. ${total.toStringAsFixed(2)}')
+        ..cellStyle = dataStyle;
+
+      row++;
+    }
+  }
+
+  /// Descargar el archivo Excel con un nombre personalizado
+  Future<void> _descargarExcelConNombre(Excel excel, String nombreArchivo) async {
     try {
       final bytes = excel.encode();
       if (bytes == null) {
         throw Exception('Error al codificar el archivo Excel');
       }
 
-      final fechaActual = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-      final nombreArchivo = 'Reporte_Reposteria_Arlex_$fechaActual.xlsx';
-
-      // Crear blob y descargar (para Flutter Web)
-      final blob = html.Blob([Uint8List.fromList(bytes)]);
+      // Crear blob con el tipo MIME correcto para Excel (.xlsx)
+      final blob = html.Blob(
+        [Uint8List.fromList(bytes)],
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
       final url = html.Url.createObjectUrlFromBlob(blob);
-      html.AnchorElement(href: url)
+
+      // Crear elemento anchor y disparar la descarga
+      final anchor = html.AnchorElement(href: url)
         ..setAttribute('download', nombreArchivo)
-        ..click();
+        ..style.display = 'none';
+
+      html.document.body?.append(anchor);
+      anchor.click();
+      anchor.remove();
 
       html.Url.revokeObjectUrl(url);
 
-      debugPrint('✅ Reporte generado exitosamente: $nombreArchivo');
+      debugPrint('✅ Reporte Excel generado exitosamente: $nombreArchivo');
+    } catch (e) {
+      debugPrint('❌ Error al descargar Excel: $e');
+      rethrow;
+    }
+  }
+
+  /// Descargar el archivo Excel en el navegador
+  Future<void> _descargarExcel(Excel excel) async {
+    try {
+      debugPrint('📦 Hojas en el archivo Excel: ${excel.tables.keys.join(", ")}');
+
+      final bytes = excel.encode();
+      if (bytes == null) {
+        throw Exception('Error al codificar el archivo Excel');
+      }
+
+      debugPrint('✅ Excel codificado: ${bytes.length} bytes');
+
+      final fechaActual = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final nombreArchivo = 'Reporte_Reposteria_Arlex_$fechaActual.xlsx';
+
+      // Crear blob con el tipo MIME correcto para Excel (.xlsx)
+      final blob = html.Blob(
+        [Uint8List.fromList(bytes)],
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
+      final url = html.Url.createObjectUrlFromBlob(blob);
+
+      // Crear elemento anchor y disparar la descarga
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute('download', nombreArchivo)
+        ..style.display = 'none';
+
+      html.document.body?.append(anchor);
+      anchor.click();
+      anchor.remove();
+
+      html.Url.revokeObjectUrl(url);
+
+      debugPrint('✅ Reporte Excel generado exitosamente: $nombreArchivo');
     } catch (e) {
       debugPrint('❌ Error al descargar Excel: $e');
       rethrow;

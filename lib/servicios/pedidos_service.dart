@@ -66,10 +66,12 @@ class PedidosService {
         return {
           'productoId': item.producto.id,
           'productoNombre': item.producto.nombre,
+          'productoDescripcion': item.producto.descripcion,
           'productoImagen': item.producto.imagenUrl ?? '',
           'cantidad': item.cantidad,
-          'precioUnitario': item.producto.precio,
+          'precioUnitario': item.precioUnitario,
           'subtotal': item.subtotal,
+          'descuento': item.tieneDescuento ? item.porcentajeDescuento : 0.0,
           'notasEspeciales': item.notasEspeciales ?? '',
         };
       }).toList();

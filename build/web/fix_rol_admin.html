@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Cambiar Rol a Admin</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        button {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+            width: 100%;
+        }
+        button:hover { background: #f57c00; }
+        .status {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Cambiar Rol "administrador" → "admin"</h1>
+        <p>Este script cambiará el rol de <code>"administrador"</code> a <code>"admin"</code> para que funcionen los permisos.</p>
+
+        <button onclick="fixRol()">Cambiar Rol a "admin"</button>
+
+        <div id="status"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, doc, updateDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDSbnF0m8c_rJ0vJqDbGWPuZe7a6JuFJ8U",
+            authDomain: "reposteriaarlex.firebaseapp.com",
+            projectId: "reposteriaarlex",
+            storageBucket: "reposteriaarlex.firebasestorage.app",
+            messagingSenderId: "1002334605134",
+            appId: "1:1002334605134:web:23b6113835b89e2e074395",
+            measurementId: "G-KQXNFCZW40"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.fixRol = async function() {
+            const statusDiv = document.getElementById('status');
+            const userId = 'lFid0eihhAYvnRl9jrAfY8KsdV33'; // UID del usuario administrador
+
+            try {
+                statusDiv.innerHTML = '<div class="status info">🔄 Actualizando rol...</div>';
+
+                // Obtener documento actual
+                const userRef = doc(db, 'usuarios', userId);
+                const userDoc = await getDoc(userRef);
+
+                if (!userDoc.exists()) {
+                    statusDiv.innerHTML = '<div class="status error">❌ Usuario no encontrado</div>';
+                    return;
+                }
+
+                statusDiv.innerHTML += `<div class="status info">Documento actual:<pre>${JSON.stringify(userDoc.data(), null, 2)}</pre></div>`;
+
+                // Actualizar rol a "admin"
+                await updateDoc(userRef, {
+                    rol: 'admin'
+                });
+
+                // Verificar actualización
+                const updatedDoc = await getDoc(userRef);
+                const updatedData = updatedDoc.data();
+
+                statusDiv.innerHTML = `
+                    <div class="status success">
+                        <h3>✅ Rol actualizado exitosamente</h3>
+                        <p><strong>Antes:</strong> "administrador"</p>
+                        <p><strong>Ahora:</strong> "${updatedData.rol}"</p>
+                        <p style="color: #ff9800; font-weight: bold; margin-top: 20px;">
+                            ⚠️ IMPORTANTE:<br>
+                            1. Cierra sesión en la aplicación Flutter<br>
+                            2. Vuelve a iniciar sesión con administrador@gmail.com<br>
+                            3. Ahora podrás crear promociones y usar todas las funciones de admin
+                        </p>
+                    </div>
+                `;
+
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ Error al actualizar:<br>
+                        <strong>${error.code}</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+                console.error('Error:', error);
+            }
+        };
+    </script>
+</body>
+</html>

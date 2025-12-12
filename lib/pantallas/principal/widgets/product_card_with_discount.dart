@@ -21,8 +21,40 @@ class ProductCardWithDiscount extends StatefulWidget {
   State<ProductCardWithDiscount> createState() => _ProductCardWithDiscountState();
 }
 
-class _ProductCardWithDiscountState extends State<ProductCardWithDiscount> {
+class _ProductCardWithDiscountState extends State<ProductCardWithDiscount> with SingleTickerProviderStateMixin {
   int _cantidad = 1;
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _glowAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _glowAnimation = Tween<double>(begin: 4.0, end: 8.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,10 +65,16 @@ class _ProductCardWithDiscountState extends State<ProductCardWithDiscount> {
     final isMobile = width < 600;
     final sinStock = producto.stock <= 0;
 
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: InkWell(
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: Card(
+            elevation: _glowAnimation.value,
+            shadowColor: Colors.orange.withValues(alpha: 0.5),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: InkWell(
         onTap: widget.onTap,
         borderRadius: BorderRadius.circular(16),
         child: Column(
@@ -44,7 +82,7 @@ class _ProductCardWithDiscountState extends State<ProductCardWithDiscount> {
           children: [
             // Imagen con badge de descuento
             Expanded(
-              flex: 3,
+              flex: isMobile ? 3 : 3,
               child: Stack(
                 children: [
                   ClipRRect(
@@ -54,7 +92,7 @@ class _ProductCardWithDiscountState extends State<ProductCardWithDiscount> {
                             producto.imagenUrl!,
                             width: double.infinity,
                             height: double.infinity,
-                            fit: BoxFit.cover,
+                            fit: BoxFit.contain,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
                                 color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
@@ -110,7 +148,7 @@ class _ProductCardWithDiscountState extends State<ProductCardWithDiscount> {
 
             // Información del producto
             Padding(
-              padding: EdgeInsets.all(isMobile ? 8 : 12),
+              padding: EdgeInsets.all(isMobile ? 6 : 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -119,12 +157,26 @@ class _ProductCardWithDiscountState extends State<ProductCardWithDiscount> {
                     producto.nombre,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: isMobile ? 13 : 14,
+                      fontSize: isMobile ? 12 : 16,
                     ),
-                    maxLines: 2,
+                    maxLines: isMobile ? 1 : 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: isMobile ? 6 : 8),
+                  SizedBox(height: isMobile ? 4 : 8),
+
+                  // Descripción (solo en desktop)
+                  if (!isMobile && producto.descripcion.isNotEmpty) ...[
+                    Text(
+                      producto.descripcion,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
+                      ),
+                      maxLines: 5,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                  ],
 
                   // Precios
                   if (tieneDescuento) ...[
@@ -143,7 +195,7 @@ class _ProductCardWithDiscountState extends State<ProductCardWithDiscount> {
                       'S/. ${producto.precioDescuento!.toStringAsFixed(2)}',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: isMobile ? 16 : 18,
+                        fontSize: isMobile ? 16 : 20,
                         color: Colors.red.shade700,
                       ),
                     ),
@@ -152,84 +204,88 @@ class _ProductCardWithDiscountState extends State<ProductCardWithDiscount> {
                       'S/. ${producto.precio.toStringAsFixed(2)}',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: isMobile ? 16 : 18,
+                        fontSize: isMobile ? 14 : 20,
                         color: Theme.of(context).primaryColor,
                       ),
                     ),
 
-                  SizedBox(height: isMobile ? 8 : 12),
+                  SizedBox(height: isMobile ? 6 : 12),
 
                   // Contador de cantidad y botón de compra
                   Row(
                     children: [
                       // Contador de cantidad
-                      Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Botón decrementar
-                            InkWell(
-                              onTap: sinStock || _cantidad <= 1
-                                  ? null
-                                  : () {
-                                      setState(() {
-                                        _cantidad--;
-                                      });
-                                    },
-                              child: Container(
-                                padding: EdgeInsets.all(isMobile ? 3 : 4),
-                                child: Icon(
-                                  Icons.remove,
-                                  size: isMobile ? 12 : 14,
-                                  color: sinStock || _cantidad <= 1
-                                      ? Colors.grey.shade400
-                                      : Theme.of(context).primaryColor,
+                      Expanded(
+                        flex: 2,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              // Botón decrementar
+                              InkWell(
+                                onTap: sinStock || _cantidad <= 1
+                                    ? null
+                                    : () {
+                                        setState(() {
+                                          _cantidad--;
+                                        });
+                                      },
+                                child: Container(
+                                  padding: EdgeInsets.all(isMobile ? 3 : 6),
+                                  child: Icon(
+                                    Icons.remove,
+                                    size: isMobile ? 12 : 16,
+                                    color: sinStock || _cantidad <= 1
+                                        ? Colors.grey.shade400
+                                        : Theme.of(context).primaryColor,
+                                  ),
                                 ),
                               ),
-                            ),
-                            // Cantidad
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: isMobile ? 4 : 6,
-                              ),
-                              child: Text(
-                                '$_cantidad',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: isMobile ? 11 : 12,
+                              // Cantidad
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isMobile ? 4 : 8,
+                                ),
+                                child: Text(
+                                  '$_cantidad',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: isMobile ? 11 : 14,
+                                  ),
                                 ),
                               ),
-                            ),
-                            // Botón incrementar
-                            InkWell(
-                              onTap: sinStock || _cantidad >= producto.stock
-                                  ? null
-                                  : () {
-                                      setState(() {
-                                        _cantidad++;
-                                      });
-                                    },
-                              child: Container(
-                                padding: EdgeInsets.all(isMobile ? 3 : 4),
-                                child: Icon(
-                                  Icons.add,
-                                  size: isMobile ? 12 : 14,
-                                  color: sinStock || _cantidad >= producto.stock
-                                      ? Colors.grey.shade400
-                                      : Theme.of(context).primaryColor,
+                              // Botón incrementar
+                              InkWell(
+                                onTap: sinStock || _cantidad >= producto.stock
+                                    ? null
+                                    : () {
+                                        setState(() {
+                                          _cantidad++;
+                                        });
+                                      },
+                                child: Container(
+                                  padding: EdgeInsets.all(isMobile ? 3 : 6),
+                                  child: Icon(
+                                    Icons.add,
+                                    size: isMobile ? 12 : 16,
+                                    color: sinStock || _cantidad >= producto.stock
+                                        ? Colors.grey.shade400
+                                        : Theme.of(context).primaryColor,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      SizedBox(width: isMobile ? 4 : 6),
                       // Botón de compra
                       Expanded(
+                        flex: 3,
                         child: ElevatedButton.icon(
                           onPressed: sinStock
                               ? null
@@ -285,19 +341,19 @@ class _ProductCardWithDiscountState extends State<ProductCardWithDiscount> {
                             backgroundColor: Theme.of(context).colorScheme.primary,
                             foregroundColor: Colors.white,
                             padding: EdgeInsets.symmetric(
-                              vertical: isMobile ? 6 : 8,
-                              horizontal: isMobile ? 6 : 8,
+                              vertical: isMobile ? 5 : 8,
+                              horizontal: isMobile ? 4 : 8,
                             ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
                             elevation: 2,
                           ),
-                          icon: Icon(Icons.shopping_cart, size: isMobile ? 14 : 16),
+                          icon: Icon(Icons.shopping_cart, size: isMobile ? 12 : 18),
                           label: Text(
                             'Comprar',
                             style: TextStyle(
-                              fontSize: isMobile ? 11 : 12,
+                              fontSize: isMobile ? 10 : 14,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -310,7 +366,10 @@ class _ProductCardWithDiscountState extends State<ProductCardWithDiscount> {
             ),
           ],
         ),
-      ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

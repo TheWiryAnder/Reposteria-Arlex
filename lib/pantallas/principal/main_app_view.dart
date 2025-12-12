@@ -838,6 +838,8 @@ class _MainAppViewState extends State<MainAppView> {
   }
 
   Widget _buildProfileDropdown(AuthProvider authProvider) {
+    final bool isAdmin = authProvider.currentUser?.rol == 'admin';
+
     return PopupMenuButton<String>(
       icon: CircleAvatar(
         backgroundColor: Colors.white,
@@ -854,6 +856,9 @@ class _MainAppViewState extends State<MainAppView> {
         switch (value) {
           case 'informacion':
             _navigateToSection(_getProfileIndex());
+            break;
+          case 'admin_panel':
+            Navigator.pushNamed(context, '/admin');
             break;
           case 'mis_pedidos':
             Navigator.push(
@@ -879,16 +884,38 @@ class _MainAppViewState extends State<MainAppView> {
             ],
           ),
         ),
-        PopupMenuItem<String>(
-          value: 'mis_pedidos',
-          child: Row(
-            children: const [
-              Icon(Icons.shopping_bag),
-              SizedBox(width: 12),
-              Text('Mis Pedidos'),
-            ],
+        // Solo mostrar "Administración" si es admin
+        if (isAdmin) ...[
+          const PopupMenuDivider(),
+          PopupMenuItem<String>(
+            value: 'admin_panel',
+            child: Row(
+              children: [
+                Icon(Icons.dashboard, color: Theme.of(context).primaryColor),
+                const SizedBox(width: 12),
+                Text(
+                  'Administración',
+                  style: TextStyle(
+                    color: Theme.of(context).primaryColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
+        // Solo mostrar "Mis Pedidos" si NO es admin
+        if (!isAdmin)
+          PopupMenuItem<String>(
+            value: 'mis_pedidos',
+            child: Row(
+              children: const [
+                Icon(Icons.shopping_bag),
+                SizedBox(width: 12),
+                Text('Mis Pedidos'),
+              ],
+            ),
+          ),
         const PopupMenuDivider(),
         PopupMenuItem<String>(
           value: 'cerrar_sesion',
