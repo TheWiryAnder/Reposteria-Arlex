@@ -178,6 +178,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final isMobile = width < 600;
+    final horizontalPadding = isMobile ? 12.0 : 16.0;
+
     return ListenableBuilder(
       listenable: AuthProvider.instance,
       builder: (context, child) {
@@ -193,7 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
         // Para admin y empleados, estructura mejorada
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(horizontalPadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1850,21 +1854,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
         print('DEBUG: Promociones vigentes: ${promocionesVigentes.length}');
 
+        final width = MediaQuery.of(context).size.width;
+        final isMobile = width < 600;
+
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Promociones',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: isMobile ? 20 : 24,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 16),
 
               if (promocionesVigentes.isEmpty)
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(32),
+                  padding: EdgeInsets.all(isMobile ? 20 : 32),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(16),
@@ -2086,22 +2096,25 @@ class _HomeScreenState extends State<HomeScreen> {
         final isMobile = width < 600;
 
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Productos Recomendados',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: isMobile ? 20 : 24,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 16),
 
               // Mostrar loading
               if (snapshot.connectionState == ConnectionState.waiting)
-                const Center(
+                Center(
                   child: Padding(
-                    padding: EdgeInsets.all(32),
-                    child: CircularProgressIndicator(),
+                    padding: EdgeInsets.all(isMobile ? 20 : 32),
+                    child: const CircularProgressIndicator(),
                   ),
                 )
               // Mostrar error o vacío
@@ -2110,7 +2123,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   snapshot.data!.docs.isEmpty)
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(32),
+                  padding: EdgeInsets.all(isMobile ? 20 : 32),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(16),

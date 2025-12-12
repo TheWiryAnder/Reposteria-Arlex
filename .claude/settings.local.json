@@ -15,7 +15,10 @@
       "Bash(flutter build:*)",
       "Bash(firebase deploy:*)",
       "Bash(git add:*)",
-      "Bash(del nul)"
+      "Bash(del nul)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nOptimización del servicio de reportes Excel y nuevas funcionalidades\n\n- Optimización de consultas Firebase: Cambiado de streams a consultas directas (.get()) para mejor rendimiento\n- Implementación de servicios de reportes: Excel, CSV y PDF con alias legibles\n- Mejoras en UI: Ajustes en tarjetas de promociones y productos\n- Nuevos archivos de servicio: boleta_pdf_service.dart, reporte_csv_service.dart\n- Debug prints detallados para rastreo de datos\n- Corrección de errores de null safety en servicios\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nBuild de producción con optimizaciones de reportes Excel\n\n- Compilación optimizada para producción\n- Servicios de reportes Excel con consultas Firebase mejoradas\n- Tree-shaking aplicado: reducción de fuentes en 98%\n- Listo para despliegue en Netlify\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []
